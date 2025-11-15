@@ -24,7 +24,9 @@ PriceAnalysis PriceAnalyzer::analyzePrices(const std::vector<PriceEntry>& prices
   // Find cheapest 90 minute period
   Cheapest90Min cheapest = findCheapest90MinPeriod(prices);
   result.cheapest90MinAvg = cheapest.avg;
-  result.cheapest90MinTime = cheapest.time;
+  if (cheapest.startIndex >= 0) {
+    result.cheapest90MinTime = prices[cheapest.startIndex].dateTime.substring(11, 16);
+  }
   
   result.valid = true;
   return result;
@@ -78,20 +80,20 @@ Cheapest90Min PriceAnalyzer::findCheapest90MinPeriod(const std::vector<PriceEntr
   }
   
   float cheapestAvg = 999999.0f;
-  String cheapestTime = "";
+  int cheapestIdx = -1;
   
   // Sliding window through all available prices
   for (size_t i = 0; i <= prices.size() - periods; i++) {
     float avg = calculate90MinAverage(prices, i);
     if (avg >= 0 && avg < cheapestAvg) {
       cheapestAvg = avg;
-      cheapestTime = prices[i].dateTime.substring(11, 16); // Extract HH:MM
+      cheapestIdx = i;
     }
   }
   
-  if (cheapestAvg != 999999.0f) {
+  if (cheapestIdx >= 0) {
     result.avg = cheapestAvg;
-    result.time = cheapestTime;
+    result.startIndex = cheapestIdx;
   }
   
   return result;

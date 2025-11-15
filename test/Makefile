@@ -1,11 +1,13 @@
 # Test Makefile for atoms3-sahkonhinta
 
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -I/opt/homebrew/include -I../src
+CXXFLAGS = -std=c++17 -Wall -Wextra -I/opt/homebrew/include
 LDFLAGS = -L/opt/homebrew/lib -lgtest -lgtest_main -pthread
 
 BUILD_DIR = ../build/test
-TEST_SOURCES = test_price_analyzer.cpp
+
+# Automatically find all test files
+TEST_SOURCES = $(wildcard test_price_analyzer_*.cpp)
 TEST_TARGETS = $(patsubst %.cpp,$(BUILD_DIR)/%,$(TEST_SOURCES))
 
 .PHONY: all clean run
@@ -15,7 +17,8 @@ all: $(BUILD_DIR) $(TEST_TARGETS)
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/test_price_analyzer: test_price_analyzer.cpp ../src/PriceData.h test_data_helpers.h mocks/MockString.h | $(BUILD_DIR)
+# Pattern rule to build any test file
+$(BUILD_DIR)/test_price_analyzer_%: test_price_analyzer_%.cpp TestStringAdapter.h ../src/PriceData.h ../src/PriceAnalyzer.h ../src/PriceAnalyzer.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 run: all

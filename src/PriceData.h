@@ -13,9 +13,9 @@ struct PriceEntry {
 
 struct Cheapest90Min {
   float avg;
-  String time;
+  int startIndex;  // Index in prices array where cheapest period starts
   
-  Cheapest90Min() : avg(-1), time("") {}
+  Cheapest90Min() : avg(-1), startIndex(-1) {}
 };
 
 struct PriceAnalysis {

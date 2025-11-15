@@ -13,6 +13,7 @@ public:
   String() : data("") {}
   String(const char* str) : data(str ? str : "") {}
   String(const std::string& str) : data(str) {}
+  String(const String& other) = default;
   String(int value) : data(std::to_string(value)) {}
   String(float value) : data(std::to_string(value)) {}
   
