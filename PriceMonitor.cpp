@@ -1,14 +1,16 @@
 #include "PriceMonitor.h"
+#include "PriceAnalyzer.h"
 #include <ArduinoJson.h>
 #include <time.h>
+#include <vector>
 
 PriceMonitor::PriceMonitor(DisplayManager* displayMgr, PriceApiClient* client) 
   : display(displayMgr), apiClient(client) {}
 
-float PriceMonitor::fetchPrice() {
+bool PriceMonitor::fetchAndAnalyzePrices() {
   FetchGuard guard(isFetching);
   
-  if (lastPrice >= 0) {
+  if (lastAnalysis.valid) {
     display->showLoadingIndicator();
   }
 
@@ -22,41 +24,56 @@ float PriceMonitor::fetchPrice() {
     } else {
       display->showText("HTTP FAILED", response.error);
     }
-    return -1;
+    return false;
   }
 
-  Serial.println(response.payload);
+  Serial.println("API Response received, parsing...");
 
-  StaticJsonDocument<2048> doc;
-  if (deserializeJson(doc, response.payload)) {
-    display->showText("JSON ERROR");
-    return -1;
+  // Use DynamicJsonDocument for the large array
+  DynamicJsonDocument doc(16384); // ~16KB for ~192 price entries
+  DeserializationError error = deserializeJson(doc, response.payload);
+  
+  if (error) {
+    display->showText("JSON ERROR", error.c_str());
+    Serial.printf("JSON parse error: %s\n", error.c_str());
+    return false;
   }
 
-  float price = -1;
-  if (doc.containsKey("PriceWithTax"))
-    price = doc["PriceWithTax"].as<float>();
-  else if (doc.containsKey("PriceNoTax"))
-    price = doc["PriceNoTax"].as<float>();
-
-  if (price < 0) {
-    display->showText("NO PRICE FIELD");
-    return -1;
+  if (!doc.is<JsonArray>()) {
+    display->showText("JSON NOT ARRAY");
+    return false;
   }
 
-  if (doc.containsKey("DateTime")) {
-    const char* dateTimeStr = doc["DateTime"];
-    struct tm timeinfo;
-    if (strptime(dateTimeStr, "%Y-%m-%dT%H:%M:%S", &timeinfo) != NULL) {
-      char timeBuf[6];
-      strftime(timeBuf, sizeof(timeBuf), "%H:%M", &timeinfo);
-      lastUpdateTime = String(timeBuf);
-    }
+  JsonArray priceArray = doc.as<JsonArray>();
+  Serial.printf("Parsed %d price entries\n", priceArray.size());
+  
+  // Convert to vector of PriceEntry
+  std::vector<PriceEntry> prices;
+  prices.reserve(priceArray.size());
+  
+  for (JsonObject obj : priceArray) {
+    PriceEntry entry;
+    entry.dateTime = obj["DateTime"].as<String>();
+    entry.priceWithTax = obj["PriceWithTax"].as<float>();
+    entry.rank = obj["Rank"].as<int>();
+    prices.push_back(entry);
+  }
+  
+  // Analyze prices
+  lastAnalysis = PriceAnalyzer::analyzePrices(prices);
+  
+  if (!lastAnalysis.valid) {
+    display->showText("ANALYSIS FAILED");
+    return false;
   }
 
-  Serial.printf("Price: %.6f EUR/kWh\n", price);
-  lastPrice = price;
-  return price;
+  Serial.printf("Current: %.2f c/kWh\n", lastAnalysis.currentPrice * 100);
+  Serial.printf("Next 90min avg: %.2f c/kWh\n", lastAnalysis.next90MinAvg * 100);
+  Serial.printf("Cheapest 90min: %.2f c/kWh @ %s\n", 
+                lastAnalysis.cheapest90MinAvg * 100, 
+                lastAnalysis.cheapest90MinTime.c_str());
+  
+  return true;
 }
 
 bool PriceMonitor::isScheduledUpdateTime() {
@@ -78,14 +95,11 @@ bool PriceMonitor::isScheduledUpdateTime() {
   return false;
 }
 
-float PriceMonitor::getLastPrice() const {
-  return lastPrice;
-}
-
-String PriceMonitor::getLastUpdateTime() const {
-  return lastUpdateTime;
+const PriceAnalysis& PriceMonitor::getLastAnalysis() const {
+  return lastAnalysis;
 }
 
 bool PriceMonitor::isFetchingPrice() const {
   return isFetching;
 }
+

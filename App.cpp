@@ -23,10 +23,10 @@ void App::setup() {
     displayManager.showText("WiFi OK", wifiManager.getIP());
     delay(1500);
     
-    Serial.println("Fetching initial price...");
-    float price = priceMonitor.fetchPrice();
-    if (price >= 0) {
-      displayManager.showPrice(price, priceMonitor.getLastUpdateTime());
+    Serial.println("Fetching initial prices...");
+    bool success = priceMonitor.fetchAndAnalyzePrices();
+    if (success) {
+      displayManager.showAnalysis(priceMonitor.getLastAnalysis());
     }
     
     wifiManager.disconnect();
@@ -60,7 +60,7 @@ void App::loop() {
   }
 }
 
-float App::fetchPriceWithWifi() {
+bool App::fetchPriceWithWifi() {
   setCpuFrequencyMhz(80);
   Serial.println("CPU boosted to 80 MHz for WiFi");
   
@@ -68,7 +68,7 @@ float App::fetchPriceWithWifi() {
   
   if (!wasConnected) {
     Serial.println("Connecting WiFi for price fetch...");
-    if (priceMonitor.getLastPrice() >= 0) {
+    if (priceMonitor.getLastAnalysis().valid) {
       displayManager.showWifiIndicator();
     }
     bool connected = wifiManager.connect();
@@ -76,28 +76,28 @@ float App::fetchPriceWithWifi() {
       displayManager.showText("WiFi FAILED");
       setCpuFrequencyMhz(10);
       Serial.println("CPU reduced to 10 MHz after WiFi failure");
-      return -1;
+      return false;
     }
   }
   
-  float price = priceMonitor.fetchPrice();
+  bool success = priceMonitor.fetchAndAnalyzePrices();
   
   wifiManager.disconnect();
   setCpuFrequencyMhz(10);
   Serial.println("CPU reduced to 10 MHz for idle");
   
-  return price;
+  return success;
 }
 
 void App::handleButtonPress() {
-  Serial.println("Button pressed, fetching price...");
+  Serial.println("Button pressed, fetching prices...");
   displayManager.setBrightness(true);
   
-  float price = fetchPriceWithWifi();
-  if (price >= 0) {
-    displayManager.showPrice(price, priceMonitor.getLastUpdateTime());
-  } else if (priceMonitor.getLastPrice() >= 0) {
-    displayManager.showPrice(priceMonitor.getLastPrice(), priceMonitor.getLastUpdateTime());
+  bool success = fetchPriceWithWifi();
+  if (success) {
+    displayManager.showAnalysis(priceMonitor.getLastAnalysis());
+  } else if (priceMonitor.getLastAnalysis().valid) {
+    displayManager.showAnalysis(priceMonitor.getLastAnalysis());
   }
   
   displayManager.setBrightUntil(millis() + 5000);
@@ -105,11 +105,11 @@ void App::handleButtonPress() {
 
 void App::handleScheduledUpdate() {
   if (priceMonitor.isScheduledUpdateTime()) {
-    float price = fetchPriceWithWifi();
-    if (price >= 0) {
-      displayManager.showPrice(price, priceMonitor.getLastUpdateTime());
-    } else if (priceMonitor.getLastPrice() >= 0) {
-      displayManager.showPrice(priceMonitor.getLastPrice(), priceMonitor.getLastUpdateTime());
+    bool success = fetchPriceWithWifi();
+    if (success) {
+      displayManager.showAnalysis(priceMonitor.getLastAnalysis());
+    } else if (priceMonitor.getLastAnalysis().valid) {
+      displayManager.showAnalysis(priceMonitor.getLastAnalysis());
     }
   }
 }

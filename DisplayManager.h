@@ -2,6 +2,7 @@
 #define DISPLAY_MANAGER_H
 
 #include <WString.h>
+#include "PriceData.h"
 
 class DisplayManager {
 private:
@@ -14,6 +15,7 @@ public:
   void showLoadingIndicator();
   void showWifiIndicator();
   void showPrice(float eurPerKwh, const String& updateTime);
+  void showAnalysis(const PriceAnalysis& analysis);
   void setBrightness(bool shouldBeBright);
   void setBrightUntil(unsigned long until);
   void updateBrightness(bool isFetching);

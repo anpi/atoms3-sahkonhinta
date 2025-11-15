@@ -63,6 +63,65 @@ void DisplayManager::showPrice(float eurPerKwh, const String& updateTime) {
   AtomS3.Display.println(buf);
 }
 
+void DisplayManager::showAnalysis(const PriceAnalysis& analysis) {
+  if (!analysis.valid) return;
+
+  float currentCents = analysis.currentPrice * 100.0f;
+  float avgCents = analysis.next90MinAvg * 100.0f;
+  float cheapestCents = analysis.cheapest90MinAvg * 100.0f;
+
+  // Determine background color based on current price
+  uint16_t bgColor, textColor;
+  if (currentCents < 8.0f) {
+    bgColor = 0x0320;
+    textColor = TFT_WHITE;
+  } else if (currentCents < 15.0f) {
+    bgColor = 0xFC60;
+    textColor = TFT_BLACK;
+  } else {
+    bgColor = 0xC800;
+    textColor = TFT_WHITE;
+  }
+
+  AtomS3.Display.fillScreen(bgColor);
+  AtomS3.Display.setTextColor(textColor);
+  
+  // Current price - larger text
+  AtomS3.Display.setTextSize(1);
+  AtomS3.Display.setCursor(4, 4);
+  AtomS3.Display.println("Now " + analysis.updateTime);
+  
+  AtomS3.Display.setTextSize(2);
+  AtomS3.Display.setCursor(4, 20);
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%.1f c", currentCents);
+  AtomS3.Display.println(buf);
+  
+  // Next 90 min average
+  AtomS3.Display.setTextSize(1);
+  AtomS3.Display.setCursor(4, 50);
+  AtomS3.Display.print("Next 1.5h: ");
+  if (avgCents >= 0) {
+    snprintf(buf, sizeof(buf), "%.1f c", avgCents);
+    AtomS3.Display.println(buf);
+  } else {
+    AtomS3.Display.println("N/A");
+  }
+  
+  // Cheapest 90 min period
+  AtomS3.Display.setCursor(4, 65);
+  AtomS3.Display.print("Cheapest: ");
+  if (cheapestCents >= 0) {
+    snprintf(buf, sizeof(buf), "%.1f c", cheapestCents);
+    AtomS3.Display.println(buf);
+    AtomS3.Display.setCursor(4, 80);
+    AtomS3.Display.print("@ ");
+    AtomS3.Display.println(analysis.cheapest90MinTime);
+  } else {
+    AtomS3.Display.println("N/A");
+  }
+}
+
 void DisplayManager::setBrightness(bool shouldBeBright) {
   if (shouldBeBright) {
     AtomS3.Display.setBrightness(255);

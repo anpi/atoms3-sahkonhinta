@@ -4,14 +4,14 @@
 #include <WString.h>
 #include "DisplayManager.h"
 #include "PriceApiClient.h"
+#include "PriceData.h"
 #include "FetchGuard.h"
 
 extern const char* API_URL;
 
 class PriceMonitor {
 private:
-  float lastPrice = -1;
-  String lastUpdateTime = "--:--";
+  PriceAnalysis lastAnalysis;
   int lastScheduledMinute = -1;
   bool isFetching = false;
   DisplayManager* display;
@@ -19,10 +19,9 @@ private:
 
 public:
   PriceMonitor(DisplayManager* displayMgr, PriceApiClient* client);
-  float fetchPrice();
+  bool fetchAndAnalyzePrices();
   bool isScheduledUpdateTime();
-  float getLastPrice() const;
-  String getLastUpdateTime() const;
+  const PriceAnalysis& getLastAnalysis() const;
   bool isFetchingPrice() const;
 };
 

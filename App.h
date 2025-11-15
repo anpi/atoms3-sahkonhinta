@@ -19,7 +19,7 @@ private:
   TimerManager timerManager;
   IdleManager idleManager;
 
-  float fetchPriceWithWifi();
+  bool fetchPriceWithWifi();
   void handleButtonPress();
   void handleScheduledUpdate();
 
