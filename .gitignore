@@ -1,0 +1,19 @@
+# Build artifacts
+*.hex
+*.bin
+*.elf
+*.map
+
+# IDE files
+.vscode/
+.idea/
+
+# Compiled Object files
+*.o
+*.obj
+
+# Arduino build directory
+build/
+
+# Configuration with credentials
+config.h
