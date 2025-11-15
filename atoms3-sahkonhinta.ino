@@ -1,5 +1,5 @@
 #include <M5AtomS3.h>
-#include "App.h"
+#include "src/App.h"
 #include "config.h"
 
 App app;

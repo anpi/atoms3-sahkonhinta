@@ -6,7 +6,7 @@
 #include "mocks/MockString.h"
 #define WString_h  // Prevent Arduino WString.h inclusion
 
-#include "../PriceData.h"
+#include "../src/PriceData.h"
 #include "test_data_helpers.h"
 
 // We need to create a testable version of the analyzer functions

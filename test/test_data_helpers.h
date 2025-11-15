@@ -1,7 +1,7 @@
 #ifndef TEST_DATA_HELPERS_H
 #define TEST_DATA_HELPERS_H
 
-#include "../PriceData.h"
+#include "../src/PriceData.h"
 #include <vector>
 
 namespace TestHelpers {

@@ -1,7 +1,7 @@
 # Test Makefile for atoms3-sahkonhinta
 
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -I/opt/homebrew/include -I..
+CXXFLAGS = -std=c++17 -Wall -Wextra -I/opt/homebrew/include -I../src
 LDFLAGS = -L/opt/homebrew/lib -lgtest -lgtest_main -pthread
 
 TEST_SOURCES = test_price_analyzer.cpp
@@ -11,7 +11,7 @@ TEST_TARGETS = $(TEST_SOURCES:.cpp=)
 
 all: $(TEST_TARGETS)
 
-test_price_analyzer: test_price_analyzer.cpp ../PriceData.h test_data_helpers.h mocks/MockString.h
+test_price_analyzer: test_price_analyzer.cpp ../src/PriceData.h test_data_helpers.h mocks/MockString.h
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 run: all

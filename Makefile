@@ -9,10 +9,15 @@ PORT = /dev/cu.usbmodem1101
 ARDUINO_CLI = arduino-cli
 
 # Targets
-.PHONY: all compile upload clean monitor help
+.PHONY: all compile upload clean monitor help test
 
 # Default target
 all: compile
+
+# Run unit tests
+test:
+	@echo "Running unit tests..."
+	@$(MAKE) -C test run
 
 # Compile the sketch
 compile:
@@ -31,6 +36,7 @@ flash: compile upload
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf build/
+	@$(MAKE) -C test clean
 
 # Open serial monitor
 monitor:
@@ -52,6 +58,7 @@ help:
 	@echo "  compile    - Compile the sketch"
 	@echo "  upload     - Upload to the board"
 	@echo "  flash      - Compile and upload"
+	@echo "  test       - Run unit tests"
 	@echo "  clean      - Remove build artifacts"
 	@echo "  monitor    - Open serial monitor"
 	@echo "  detect     - Detect connected boards"
