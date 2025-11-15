@@ -73,6 +73,10 @@ Cheapest90Min PriceAnalyzer::findCheapest90MinPeriod(const std::vector<PriceEntr
   const int periods = 6; // 6 * 15min = 90min
   Cheapest90Min result;
   
+  if (prices.size() < (size_t)periods) {
+    return result; // Not enough data
+  }
+  
   float cheapestAvg = 999999.0f;
   String cheapestTime = "";
   

@@ -1,7 +1,9 @@
 #ifndef PRICE_DATA_H
 #define PRICE_DATA_H
 
-#include <WString.h>
+#ifndef WString_h
+  #include <WString.h>
+#endif
 
 struct PriceEntry {
   String dateTime;

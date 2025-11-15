@@ -15,5 +15,10 @@
 # Arduino build directory
 build/
 
+# Test binaries
+test/test_*
+!test/test_*.cpp
+!test/test_*.h
+
 # Configuration with credentials
 config.h
