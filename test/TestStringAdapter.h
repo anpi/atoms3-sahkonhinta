@@ -52,6 +52,14 @@ public:
     return data == (str ? str : "");
   }
   
+  bool operator!=(const String& other) const {
+    return data != other.data;
+  }
+  
+  bool operator!=(const char* str) const {
+    return data != (str ? str : "");
+  }
+  
   // For std::cout
   friend std::ostream& operator<<(std::ostream& os, const String& str) {
     os << str.data;

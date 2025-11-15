@@ -10,7 +10,7 @@ BUILD_DIR = ../build/test
 TEST_SOURCES = $(wildcard test_price_analyzer_*.cpp)
 TEST_TARGETS = $(patsubst %.cpp,$(BUILD_DIR)/%,$(TEST_SOURCES))
 
-.PHONY: all clean run
+.PHONY: all clean run test
 
 all: $(BUILD_DIR) $(TEST_TARGETS)
 
@@ -20,6 +20,8 @@ $(BUILD_DIR):
 # Pattern rule to build any test file
 $(BUILD_DIR)/test_price_analyzer_%: test_price_analyzer_%.cpp TestStringAdapter.h ../src/PriceData.h ../src/PriceAnalyzer.h ../src/PriceAnalyzer.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
+
+test: run
 
 run: all
 	@echo "Running tests..."

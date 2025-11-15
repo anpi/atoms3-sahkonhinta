@@ -14,9 +14,8 @@ PriceAnalysis PriceAnalyzer::analyzePrices(const std::vector<PriceEntry>& prices
     return result;
   }
   
-  // Set current price
-  result.currentPrice = prices[currentIdx].priceWithTax;
-  result.updateTime = prices[currentIdx].dateTime.substring(11, 16); // Extract HH:MM
+  // Set current period start time
+  result.currentPeriodStartTime = prices[currentIdx].dateTime.substring(11, 16); // Extract HH:MM
   
   // Calculate next 90 minutes average (6 periods of 15 min)
   result.next90MinAvg = calculate90MinAverage(prices, currentIdx);
@@ -26,6 +25,11 @@ PriceAnalysis PriceAnalyzer::analyzePrices(const std::vector<PriceEntry>& prices
   result.cheapest90MinAvg = cheapest.avg;
   if (cheapest.startIndex >= 0) {
     result.cheapest90MinTime = prices[cheapest.startIndex].dateTime.substring(11, 16);
+    
+    // Check if cheapest period is tomorrow
+    String currentDate = prices[currentIdx].dateTime.substring(0, 10);
+    String cheapestDate = prices[cheapest.startIndex].dateTime.substring(0, 10);
+    result.cheapestIsTomorrow = (currentDate != cheapestDate);
   }
   
   result.valid = true;

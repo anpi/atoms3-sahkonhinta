@@ -23,7 +23,6 @@ void DisplayManager::showLoadingIndicator() {
   AtomS3.Display.setTextColor(TFT_BLACK);
   AtomS3.Display.setTextSize(1);
   AtomS3.Display.setCursor(116, 4);
-  AtomS3.Display.println("...");
 }
 
 void DisplayManager::showWifiIndicator() {
@@ -34,92 +33,89 @@ void DisplayManager::showWifiIndicator() {
   AtomS3.Display.println("W");
 }
 
-void DisplayManager::showPrice(float eurPerKwh, const String& updateTime) {
-  if (eurPerKwh < 0) return;
-
-  float cents = eurPerKwh * 100.0f;
-  char buf[32];
-  snprintf(buf, sizeof(buf), "%.1f c/kWh", cents);
-
-  uint16_t bgColor, textColor;
-  if (cents < 8.0f) {
-    bgColor = 0x0320;
-    textColor = TFT_WHITE;
-  } else if (cents < 15.0f) {
-    bgColor = 0xFC60;
-    textColor = TFT_BLACK;
-  } else {
-    bgColor = 0xC800;
-    textColor = TFT_WHITE;
-  }
-
-  AtomS3.Display.fillScreen(bgColor);
-  AtomS3.Display.setTextColor(textColor);
-  AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setCursor(4, 4);
-  AtomS3.Display.println("Spot price " + updateTime);
-  AtomS3.Display.setTextSize(2);
-  AtomS3.Display.setCursor(4, 24);
-  AtomS3.Display.println(buf);
-}
-
 void DisplayManager::showAnalysis(const PriceAnalysis& analysis) {
   if (!analysis.valid) return;
 
-  float currentCents = analysis.currentPrice * 100.0f;
   float avgCents = analysis.next90MinAvg * 100.0f;
   float cheapestCents = analysis.cheapest90MinAvg * 100.0f;
 
-  // Determine background color based on current price
+  // Determine background color based on next 90min average
   uint16_t bgColor, textColor;
-  if (currentCents < 8.0f) {
-    bgColor = 0x0320;
+  if (avgCents < 0) {
+    // No data for next 90min - use neutral color
+    bgColor = TFT_BLACK;
     textColor = TFT_WHITE;
-  } else if (currentCents < 15.0f) {
-    bgColor = 0xFC60;
+  } else if (avgCents < 8.0f) {
+    bgColor = 0x0320;  // Green
+    textColor = TFT_WHITE;
+  } else if (avgCents < 15.0f) {
+    bgColor = 0xFC60;  // Yellow
     textColor = TFT_BLACK;
   } else {
-    bgColor = 0xC800;
+    bgColor = 0xC800;  // Red
     textColor = TFT_WHITE;
   }
 
   AtomS3.Display.fillScreen(bgColor);
   AtomS3.Display.setTextColor(textColor);
   
-  // Current price - larger text
+  // Top section: "Now HH:MM" label
+  String nowLabel = "Nyt " + analysis.currentPeriodStartTime;
+  
   AtomS3.Display.setTextSize(1);
+  AtomS3.Display.setTextColor(textColor);
   AtomS3.Display.setCursor(4, 4);
-  AtomS3.Display.println("Now " + analysis.updateTime);
+  AtomS3.Display.print(nowLabel);
   
-  AtomS3.Display.setTextSize(2);
-  AtomS3.Display.setCursor(4, 20);
+  // Next 90min price - centered between "Nyt" and "Halvin" labels
+  AtomS3.Display.setTextSize(3);
+  AtomS3.Display.setTextColor(textColor);
   char buf[16];
-  snprintf(buf, sizeof(buf), "%.1f c", currentCents);
-  AtomS3.Display.println(buf);
-  
-  // Next 90 min average
-  AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setCursor(4, 50);
-  AtomS3.Display.print("Next 1.5h: ");
   if (avgCents >= 0) {
     snprintf(buf, sizeof(buf), "%.1f c", avgCents);
-    AtomS3.Display.println(buf);
+    int textWidth = strlen(buf) * 18;  // Approx width for size 3
+    int x = (128 - textWidth) / 2;
+    if (x < 0) x = 4;  // Safety check
+    AtomS3.Display.setCursor(x, 24);
+    AtomS3.Display.print(buf);
   } else {
-    AtomS3.Display.println("N/A");
+    AtomS3.Display.setCursor(30, 24);
+    AtomS3.Display.print("N/A");
   }
   
-  // Cheapest 90 min period
-  AtomS3.Display.setCursor(4, 65);
-  AtomS3.Display.print("Cheapest: ");
+  // Middle section: Cheapest period label
+  AtomS3.Display.setTextSize(1);
+  AtomS3.Display.setTextColor(textColor);
   if (cheapestCents >= 0) {
+    // Build the cheapest time string with optional (tom)
+    String cheapestLabel = "Halvin " + analysis.cheapest90MinTime;
+    if (analysis.cheapestIsTomorrow) {
+      cheapestLabel += " (huo)";
+    }
+    
+    AtomS3.Display.setCursor(4, 68);
+    AtomS3.Display.print(cheapestLabel);
+    
+    // Cheapest price - centered between "Halvin" and "Päivitetty" labels
+    AtomS3.Display.setTextSize(2);
+    AtomS3.Display.setTextColor(textColor);
     snprintf(buf, sizeof(buf), "%.1f c", cheapestCents);
-    AtomS3.Display.println(buf);
-    AtomS3.Display.setCursor(4, 80);
-    AtomS3.Display.print("@ ");
-    AtomS3.Display.println(analysis.cheapest90MinTime);
+    int priceWidth = strlen(buf) * 12;  // Approx width for size 2
+    int x = (128 - priceWidth) / 2;
+    if (x < 0) x = 4;  // Safety check
+    AtomS3.Display.setCursor(x, 88);
+    AtomS3.Display.print(buf);
   } else {
-    AtomS3.Display.println("N/A");
+    AtomS3.Display.setCursor(4, 88);
+    AtomS3.Display.print("No data");
   }
+  
+  // Bottom: Update time
+  AtomS3.Display.setTextSize(1);
+  AtomS3.Display.setTextColor(textColor);
+  AtomS3.Display.setCursor(4, 116);
+  AtomS3.Display.print("Päivitetty ");
+  AtomS3.Display.print(analysis.lastFetchTime);
 }
 
 void DisplayManager::setBrightness(bool shouldBeBright) {

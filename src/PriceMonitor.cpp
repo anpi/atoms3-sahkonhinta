@@ -55,7 +55,6 @@ bool PriceMonitor::fetchAndAnalyzePrices() {
     PriceEntry entry;
     entry.dateTime = obj["DateTime"].as<String>();
     entry.priceWithTax = obj["PriceWithTax"].as<float>();
-    entry.rank = obj["Rank"].as<int>();
     prices.push_back(entry);
   }
   
@@ -66,8 +65,14 @@ bool PriceMonitor::fetchAndAnalyzePrices() {
     display->showText("ANALYSIS FAILED");
     return false;
   }
+  
+  // Store the fetch time
+  time_t now = time(nullptr);
+  struct tm* timeinfo = localtime(&now);
+  char timeBuf[6];
+  snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min);
+  lastAnalysis.lastFetchTime = String(timeBuf);
 
-  Serial.printf("Current: %.2f c/kWh\n", lastAnalysis.currentPrice * 100);
   Serial.printf("Next 90min avg: %.2f c/kWh\n", lastAnalysis.next90MinAvg * 100);
   Serial.printf("Cheapest 90min: %.2f c/kWh @ %s\n", 
                 lastAnalysis.cheapest90MinAvg * 100, 

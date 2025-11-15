@@ -16,10 +16,10 @@ TEST(RealisticBugs, CurrentTimeNearEndOfData_NotEnoughFuture) {
   std::vector<PriceEntry> prices;
   
   // Simulate we're at 23:00 and only have data until 23:45 (4 periods)
-  prices.push_back({"2025-11-15T23:00:00", 0.10f, 0});
-  prices.push_back({"2025-11-15T23:15:00", 0.11f, 1});
-  prices.push_back({"2025-11-15T23:30:00", 0.12f, 2});
-  prices.push_back({"2025-11-15T23:45:00", 0.13f, 3});
+  prices.push_back({"2025-11-15T23:00:00", 0.10f});
+  prices.push_back({"2025-11-15T23:15:00", 0.11f});
+  prices.push_back({"2025-11-15T23:30:00", 0.12f});
+  prices.push_back({"2025-11-15T23:45:00", 0.13f});
   
   // Try to calculate 90min average from index 0 - needs 6 periods but only have 4
   float avg = PriceAnalyzer::calculate90MinAverage(prices, 0);
@@ -53,13 +53,13 @@ TEST(RealisticBugs, DuplicateTimestamps) {
   std::vector<PriceEntry> prices;
   
   // Same timestamp twice (API error or DST transition)
-  prices.push_back({"2025-11-15T10:00:00", 0.10f, 0});
-  prices.push_back({"2025-11-15T10:00:00", 0.15f, 1});  // Duplicate!
-  prices.push_back({"2025-11-15T10:15:00", 0.11f, 2});
-  prices.push_back({"2025-11-15T10:30:00", 0.12f, 3});
-  prices.push_back({"2025-11-15T10:45:00", 0.13f, 4});
-  prices.push_back({"2025-11-15T11:00:00", 0.14f, 5});
-  prices.push_back({"2025-11-15T11:15:00", 0.15f, 6});
+  prices.push_back({"2025-11-15T10:00:00", 0.10f});
+  prices.push_back({"2025-11-15T10:00:00", 0.15f});  // Duplicate!
+  prices.push_back({"2025-11-15T10:15:00", 0.11f});
+  prices.push_back({"2025-11-15T10:30:00", 0.12f});
+  prices.push_back({"2025-11-15T10:45:00", 0.13f});
+  prices.push_back({"2025-11-15T11:00:00", 0.14f});
+  prices.push_back({"2025-11-15T11:15:00", 0.15f});
   
   Cheapest90Min result = PriceAnalyzer::findCheapest90MinPeriod(prices);
   
@@ -76,12 +76,12 @@ TEST(RealisticBugs, PricesNotChronologicallySorted) {
   std::vector<PriceEntry> prices;
   
   // Prices in wrong order
-  prices.push_back({"2025-11-15T10:30:00", 0.12f, 2});
-  prices.push_back({"2025-11-15T10:00:00", 0.10f, 0});  // Out of order!
-  prices.push_back({"2025-11-15T10:15:00", 0.11f, 1});
-  prices.push_back({"2025-11-15T11:00:00", 0.14f, 4});
-  prices.push_back({"2025-11-15T10:45:00", 0.13f, 3});  // Out of order!
-  prices.push_back({"2025-11-15T11:15:00", 0.15f, 5});
+  prices.push_back({"2025-11-15T10:30:00", 0.12f});
+  prices.push_back({"2025-11-15T10:00:00", 0.10f});  // Out of order!
+  prices.push_back({"2025-11-15T10:15:00", 0.11f});
+  prices.push_back({"2025-11-15T11:00:00", 0.14f});
+  prices.push_back({"2025-11-15T10:45:00", 0.13f});  // Out of order!
+  prices.push_back({"2025-11-15T11:15:00", 0.15f});
   
   Cheapest90Min result = PriceAnalyzer::findCheapest90MinPeriod(prices);
   
@@ -102,15 +102,15 @@ TEST(RealisticBugs, MissingTimestamps_GapsInData) {
   std::vector<PriceEntry> prices;
   
   // Missing 10:15 and 10:30 - gap in the data
-  prices.push_back({"2025-11-15T10:00:00", 0.10f, 0});
+  prices.push_back({"2025-11-15T10:00:00", 0.10f});
   // Missing 10:15
   // Missing 10:30
-  prices.push_back({"2025-11-15T10:45:00", 0.13f, 3});
-  prices.push_back({"2025-11-15T11:00:00", 0.14f, 4});
-  prices.push_back({"2025-11-15T11:15:00", 0.15f, 5});
-  prices.push_back({"2025-11-15T11:30:00", 0.16f, 6});
-  prices.push_back({"2025-11-15T11:45:00", 0.17f, 7});
-  prices.push_back({"2025-11-15T12:00:00", 0.18f, 8});
+  prices.push_back({"2025-11-15T10:45:00", 0.13f});
+  prices.push_back({"2025-11-15T11:00:00", 0.14f});
+  prices.push_back({"2025-11-15T11:15:00", 0.15f});
+  prices.push_back({"2025-11-15T11:30:00", 0.16f});
+  prices.push_back({"2025-11-15T11:45:00", 0.17f});
+  prices.push_back({"2025-11-15T12:00:00", 0.18f});
   
   float avg = PriceAnalyzer::calculate90MinAverage(prices, 0);
   

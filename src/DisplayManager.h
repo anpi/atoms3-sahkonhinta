@@ -14,7 +14,6 @@ public:
   void showText(const String& l1, const String& l2 = "");
   void showLoadingIndicator();
   void showWifiIndicator();
-  void showPrice(float eurPerKwh, const String& updateTime);
   void showAnalysis(const PriceAnalysis& analysis);
   void setBrightness(bool shouldBeBright);
   void setBrightUntil(unsigned long until);

@@ -13,12 +13,12 @@
 // Test Suite: calculate90MinAverage
 TEST(Calculate90MinAverage, ValidInput_Exactly6Periods) {
   std::vector<PriceEntry> prices = {
-    {"2025-11-15T10:00:00", 0.10f, 0},
-    {"2025-11-15T10:15:00", 0.11f, 1},
-    {"2025-11-15T10:30:00", 0.12f, 2},
-    {"2025-11-15T10:45:00", 0.13f, 3},
-    {"2025-11-15T11:00:00", 0.14f, 4},
-    {"2025-11-15T11:15:00", 0.15f, 5}
+    {"2025-11-15T10:00:00", 0.10f},
+    {"2025-11-15T10:15:00", 0.11f},
+    {"2025-11-15T10:30:00", 0.12f},
+    {"2025-11-15T10:45:00", 0.13f},
+    {"2025-11-15T11:00:00", 0.14f},
+    {"2025-11-15T11:15:00", 0.15f}
   };
   
   float avg = PriceAnalyzer::calculate90MinAverage(prices, 0);
@@ -28,7 +28,7 @@ TEST(Calculate90MinAverage, ValidInput_Exactly6Periods) {
 TEST(Calculate90MinAverage, ValidInput_MoreThan6Periods) {
   std::vector<PriceEntry> prices;
   for (int i = 0; i < 20; i++) {
-    prices.push_back({"2025-11-15T10:00:00", 0.10f + i * 0.01f, i});
+    prices.push_back({"2025-11-15T10:00:00", 0.10f + i * 0.01f});
   }
   
   float avg = PriceAnalyzer::calculate90MinAverage(prices, 0);
@@ -39,7 +39,7 @@ TEST(Calculate90MinAverage, ValidInput_MoreThan6Periods) {
 TEST(Calculate90MinAverage, NotEnoughPeriodsRemaining) {
   std::vector<PriceEntry> prices;
   for (int i = 0; i < 6; i++) {
-    prices.push_back({"2025-11-15T10:00:00", 0.10f, i});
+    prices.push_back({"2025-11-15T10:00:00", 0.10f});
   }
   
   float avg = PriceAnalyzer::calculate90MinAverage(prices, 1);
@@ -55,15 +55,15 @@ TEST(Calculate90MinAverage, EmptyDataset) {
 // Test Suite: findCheapest90MinPeriod
 TEST(FindCheapest90MinPeriod, MultipleWindows_ReturnsLowest) {
   std::vector<PriceEntry> prices = {
-    {"2025-11-15T10:00:00", 0.10f, 0},
-    {"2025-11-15T10:15:00", 0.12f, 1},
-    {"2025-11-15T10:30:00", 0.03f, 2},  // Cheapest period starts here
-    {"2025-11-15T10:45:00", 0.04f, 3},
-    {"2025-11-15T11:00:00", 0.05f, 4},
-    {"2025-11-15T11:15:00", 0.04f, 5},
-    {"2025-11-15T11:30:00", 0.03f, 6},
-    {"2025-11-15T11:45:00", 0.05f, 7},
-    {"2025-11-15T12:00:00", 0.10f, 8}
+    {"2025-11-15T10:00:00", 0.10f},
+    {"2025-11-15T10:15:00", 0.12f},
+    {"2025-11-15T10:30:00", 0.03f},  // Cheapest period starts here
+    {"2025-11-15T10:45:00", 0.04f},
+    {"2025-11-15T11:00:00", 0.05f},
+    {"2025-11-15T11:15:00", 0.04f},
+    {"2025-11-15T11:30:00", 0.03f},
+    {"2025-11-15T11:45:00", 0.05f},
+    {"2025-11-15T12:00:00", 0.10f}
   };
   
   Cheapest90Min result = PriceAnalyzer::findCheapest90MinPeriod(prices);
@@ -75,7 +75,7 @@ TEST(FindCheapest90MinPeriod, MultipleWindows_ReturnsLowest) {
 TEST(FindCheapest90MinPeriod, SingleValidWindow) {
   std::vector<PriceEntry> prices;
   for (int i = 0; i < 6; i++) {
-    prices.push_back({"2025-11-15T10:00:00", 0.10f + i * 0.01f, i});
+    prices.push_back({"2025-11-15T10:00:00", 0.10f + i * 0.01f});
   }
   
   Cheapest90Min result = PriceAnalyzer::findCheapest90MinPeriod(prices);
@@ -87,7 +87,7 @@ TEST(FindCheapest90MinPeriod, SingleValidWindow) {
 TEST(FindCheapest90MinPeriod, AllPricesEqual_ReturnsFirst) {
   std::vector<PriceEntry> prices;
   for (int i = 0; i < 10; i++) {
-    prices.push_back({"2025-11-15T10:00:00", 0.10f, i});
+    prices.push_back({"2025-11-15T10:00:00", 0.10f});
   }
   
   Cheapest90Min result = PriceAnalyzer::findCheapest90MinPeriod(prices);
@@ -98,9 +98,9 @@ TEST(FindCheapest90MinPeriod, AllPricesEqual_ReturnsFirst) {
 
 TEST(FindCheapest90MinPeriod, FewerThan6Periods_ReturnsInvalid) {
   std::vector<PriceEntry> prices = {
-    {"2025-11-15T10:00:00", 0.10f, 0},
-    {"2025-11-15T10:15:00", 0.11f, 1},
-    {"2025-11-15T10:30:00", 0.12f, 2}
+    {"2025-11-15T10:00:00", 0.10f},
+    {"2025-11-15T10:15:00", 0.11f},
+    {"2025-11-15T10:30:00", 0.12f}
   };
   
   Cheapest90Min result = PriceAnalyzer::findCheapest90MinPeriod(prices);

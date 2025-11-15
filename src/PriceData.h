@@ -8,7 +8,6 @@
 struct PriceEntry {
   String dateTime;
   float priceWithTax;
-  int rank;
 };
 
 struct Cheapest90Min {
@@ -19,14 +18,15 @@ struct Cheapest90Min {
 };
 
 struct PriceAnalysis {
-  float currentPrice;
   float next90MinAvg;
   float cheapest90MinAvg;
   String cheapest90MinTime;
-  String updateTime;
+  String currentPeriodStartTime;          // Current period start time (HH:MM)
+  String lastFetchTime;       // When data was last fetched (HH:MM)
+  bool cheapestIsTomorrow;
   bool valid;
   
-  PriceAnalysis() : currentPrice(-1), next90MinAvg(-1), cheapest90MinAvg(-1), valid(false) {}
+  PriceAnalysis() : next90MinAvg(-1), cheapest90MinAvg(-1), cheapestIsTomorrow(false), valid(false) {}
 };
 
 #endif
