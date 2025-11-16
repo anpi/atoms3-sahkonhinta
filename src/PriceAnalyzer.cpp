@@ -14,7 +14,6 @@ PriceAnalysis PriceAnalyzer::analyzePrices(const std::vector<PriceEntry>& prices
     return result;
   }
   
-  // Set current period start time
   result.currentPeriodStartTime = prices[currentIdx].dateTime.substring(11, 16); // Extract HH:MM
   
   // Calculate next 90 minutes average (6 periods of 15 min)
@@ -90,8 +89,43 @@ Cheapest90Min PriceAnalyzer::findCheapest90MinPeriod(const std::vector<PriceEntr
   for (size_t i = 0; i <= prices.size() - periods; i++) {
     float avg = calculate90MinAverage(prices, i);
     if (avg >= 0 && avg < cheapestAvg) {
-      cheapestAvg = avg;
-      cheapestIdx = i;
+      // Check time constraints: period must start at or after 7:00 and end at or before 23:00
+      // Extract hour and minute from start time (format: "YYYY-MM-DDTHH:MM:SS")
+      String startTime = prices[i].dateTime.substring(11, 16); // HH:MM
+      const char* startStr = startTime.c_str();
+      int startHour = (startStr[0] - '0') * 10 + (startStr[1] - '0');
+      
+      // End time is 90 minutes (6 periods) after start
+      // Last period is at index i+5, which ends 15 minutes later
+      String endTime = prices[i + periods - 1].dateTime.substring(11, 16);
+      const char* endStr = endTime.c_str();
+      int endHour = (endStr[0] - '0') * 10 + (endStr[1] - '0');
+      int endMinute = (endStr[3] - '0') * 10 + (endStr[4] - '0');
+      
+      // Add 15 minutes to end time to get actual end
+      endMinute += 15;
+      if (endMinute >= 60) {
+        endMinute -= 60;
+        endHour += 1;
+        if (endHour >= 24) {
+          endHour = 0;  // Wrap to next day
+        }
+      }
+      
+      // Check if period is within valid hours (7:00-23:00)
+      // Start must be >= 7:00
+      bool startValid = (startHour >= 7);
+      // End must be <= 23:00 and not wrap past midnight
+      bool endValid = (endHour < 23) || (endHour == 23 && endMinute == 0);
+      // If end hour is less than start hour, we've crossed midnight (invalid)
+      if (endHour < startHour) {
+        endValid = false;
+      }
+      
+      if (startValid && endValid) {
+        cheapestAvg = avg;
+        cheapestIdx = i;
+      }
     }
   }
   
