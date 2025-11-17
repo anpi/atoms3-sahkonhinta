@@ -1,0 +1,59 @@
+# AtomS3 Electricity Price Monitor - AI Development Guidelines
+
+## Project Context
+- **Hardware:** M5Stack AtomS3 (ESP32-S3) with 128x128 TFT display
+- **Purpose:** Display Finnish electricity spot prices with cheapest period recommendations
+- **API:** https://api.spot-hinta.fi/TodayAndDayForward?region=FI
+- **Language:** Finnish UI labels ("Nyt", "Halvin", "Päivitetty")
+
+## Development Principles
+1. **Test-Driven Development:** Write tests before implementation for core algorithms
+2. **Time Constraints:** Cheapest period must be 7:00-23:00 (washing machines can't run at night)
+3. **90-Minute Periods:** Always calculate based on 6 consecutive 15-minute intervals
+
+## Testing
+- Test framework: Google Test
+- Run tests: `make test`
+- Current coverage: 27 unit tests across 4 suites
+- All tests must pass before committing
+
+## Code Organization
+```
+src/
+├── App.cpp              # Main controller
+├── DisplayManager.cpp   # View layer (Finnish UI, color coding)
+├── PriceMonitor.cpp     # Model layer
+├── PriceAnalyzer.cpp    # Core algorithm (time constraints here!)
+├── PriceApiClient.cpp   # API integration
+├── WiFiManager.cpp      # Network management
+└── TimerManager.cpp     # 15-minute update scheduling
+
+test/
+├── test_price_analyzer_basic.cpp
+├── test_price_analyzer_time_constraints.cpp
+├── test_price_analyzer_edge_cases.cpp
+└── test_price_analyzer_datetime.cpp
+```
+
+## Key Implementation Details
+- **Color Thresholds:** Green <8¢, Yellow 8-15¢, Red >15¢ (RGB565: 0x0320, 0xFC60, 0xC800)
+- **Brightness:** Default 1/255, bright mode 255/255 for 5 seconds after button/update
+- **Update Schedule:** Every 15 minutes at :00, :15, :30, :45
+- **Time Validation:** Reject periods crossing midnight or outside 7:00-23:00
+
+## Documentation
+- **requirements.md:** User story format, condensed test references (file names only)
+- Keep requirements synchronized with implementation
+- Update "Last Updated" date when modifying requirements.md
+
+## Build & Deploy
+- Build: `make` or `make build`
+- Upload: `make upload`
+- Test: `make test`
+- Binary size target: <2MB (currently ~1.26MB)
+
+## Common Gotchas
+- Time parsing: Extract HH:MM from "YYYY-MM-DDTHH:MM:SS" format
+- Midnight crossing: Check if endHour < startHour → invalid
+- API failures: Maintain last valid data, don't crash
+- Button response: Must be <100ms
