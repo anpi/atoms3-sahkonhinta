@@ -15,5 +15,8 @@
 # Build directory (Arduino and test binaries)
 build/
 
+# Test vendor dependencies (optional local ArduinoJson)
+test/vendor/
+
 # Configuration with credentials
 config.h

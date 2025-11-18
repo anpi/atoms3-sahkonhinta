@@ -7,6 +7,55 @@
 PriceMonitor::PriceMonitor(DisplayManager* displayMgr, PriceApiClient* client) 
   : display(displayMgr), apiClient(client) {}
 
+std::vector<PriceEntry> PriceMonitor::parseJsonToEntries(const String& json) {
+  std::vector<PriceEntry> prices;
+  
+  DynamicJsonDocument doc(16384); // ~16KB for ~192 price entries
+  DeserializationError error = deserializeJson(doc, json);
+  
+  if (error) {
+    Serial.printf("JSON parse error: %s\n", error.c_str());
+    return prices; // empty vector indicates error
+  }
+
+  if (!doc.is<JsonArray>()) {
+    Serial.println("JSON is not an array");
+    return prices;
+  }
+
+  JsonArray priceArray = doc.as<JsonArray>();
+  Serial.printf("Parsed %d price entries\n", priceArray.size());
+  
+  prices.reserve(priceArray.size());
+  
+  for (JsonObject obj : priceArray) {
+    PriceEntry entry;
+    entry.dateTime = obj["DateTime"].as<String>();
+    entry.priceWithTax = obj["PriceWithTax"].as<float>();
+    prices.push_back(entry);
+  }
+  
+  return prices;
+}
+
+void PriceMonitor::handleApiError(const PriceApiClient::ApiResponse& response) {
+  if (response.error == "No WiFi connection") {
+    display->showText("NO WIFI");
+  } else if (response.httpCode > 0) {
+    display->showText("HTTP ERROR", String(response.httpCode));
+  } else {
+    display->showText("HTTP FAILED", response.error);
+  }
+}
+
+void PriceMonitor::stampAnalysisTime() {
+  time_t now = time(nullptr);
+  struct tm* timeinfo = localtime(&now);
+  char timeBuf[6];
+  snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min);
+  lastAnalysis.lastFetchTime = String(timeBuf);
+}
+
 bool PriceMonitor::fetchAndAnalyzePrices() {
   FetchGuard guard(isFetching);
   
@@ -17,48 +66,19 @@ bool PriceMonitor::fetchAndAnalyzePrices() {
   PriceApiClient::ApiResponse response = apiClient->fetchJson(API_URL);
   
   if (!response.success) {
-    if (response.error == "No WiFi connection") {
-      display->showText("NO WIFI");
-    } else if (response.httpCode > 0) {
-      display->showText("HTTP ERROR", String(response.httpCode));
-    } else {
-      display->showText("HTTP FAILED", response.error);
-    }
+    handleApiError(response);
     return false;
   }
 
   Serial.println("API Response received, parsing...");
 
-  // Use DynamicJsonDocument for the large array
-  DynamicJsonDocument doc(16384); // ~16KB for ~192 price entries
-  DeserializationError error = deserializeJson(doc, response.payload);
+  std::vector<PriceEntry> prices = parseJsonToEntries(response.payload);
   
-  if (error) {
-    display->showText("JSON ERROR", error.c_str());
-    Serial.printf("JSON parse error: %s\n", error.c_str());
+  if (prices.empty()) {
+    display->showText("JSON ERROR");
     return false;
   }
-
-  if (!doc.is<JsonArray>()) {
-    display->showText("JSON NOT ARRAY");
-    return false;
-  }
-
-  JsonArray priceArray = doc.as<JsonArray>();
-  Serial.printf("Parsed %d price entries\n", priceArray.size());
   
-  // Convert to vector of PriceEntry
-  std::vector<PriceEntry> prices;
-  prices.reserve(priceArray.size());
-  
-  for (JsonObject obj : priceArray) {
-    PriceEntry entry;
-    entry.dateTime = obj["DateTime"].as<String>();
-    entry.priceWithTax = obj["PriceWithTax"].as<float>();
-    prices.push_back(entry);
-  }
-  
-  // Analyze prices
   lastAnalysis = PriceAnalyzer::analyzePrices(prices);
   
   if (!lastAnalysis.valid) {
@@ -66,12 +86,7 @@ bool PriceMonitor::fetchAndAnalyzePrices() {
     return false;
   }
   
-  // Store the fetch time
-  time_t now = time(nullptr);
-  struct tm* timeinfo = localtime(&now);
-  char timeBuf[6];
-  snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min);
-  lastAnalysis.lastFetchTime = String(timeBuf);
+  stampAnalysisTime();
 
   Serial.printf("Next 90min avg: %.2f c/kWh\n", lastAnalysis.next90MinAvg * 100);
   Serial.printf("Cheapest 90min: %.2f c/kWh @ %s\n", 

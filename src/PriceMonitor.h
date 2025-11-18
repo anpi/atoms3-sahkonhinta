@@ -17,6 +17,11 @@ private:
   DisplayManager* display;
   PriceApiClient* apiClient;
 
+  // Helper methods for testability
+  std::vector<PriceEntry> parseJsonToEntries(const String& json);
+  void handleApiError(const PriceApiClient::ApiResponse& response);
+  void stampAnalysisTime();
+
 public:
   PriceMonitor(DisplayManager* displayMgr, PriceApiClient* client);
   bool fetchAndAnalyzePrices();

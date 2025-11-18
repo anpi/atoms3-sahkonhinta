@@ -31,7 +31,8 @@ PriceAnalysis PriceAnalyzer::analyzePrices(const std::vector<PriceEntry>& prices
     result.cheapestIsTomorrow = (currentDate != cheapestDate);
   }
   
-  result.valid = true;
+  // Only valid if we have both next 90min average and cheapest period
+  result.valid = (result.next90MinAvg >= 0 && result.cheapest90MinAvg >= 0);
   return result;
 }
 

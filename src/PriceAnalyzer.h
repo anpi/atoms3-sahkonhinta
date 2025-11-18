@@ -11,8 +11,6 @@ public:
   // Exposed for testing
   static float calculate90MinAverage(const std::vector<PriceEntry>& prices, int startIdx);
   static Cheapest90Min findCheapest90MinPeriod(const std::vector<PriceEntry>& prices);
-  
-private:
   static int findCurrentPriceIndex(const std::vector<PriceEntry>& prices);
 };
 
