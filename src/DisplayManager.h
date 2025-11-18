@@ -3,22 +3,23 @@
 
 #include <WString.h>
 #include "PriceData.h"
+#include "IDisplay.h"
 
-class DisplayManager {
+class DisplayManager : public IDisplay {
 private:
   bool bright = false;
   unsigned long brightUntil = 0;
 
 public:
-  void initialize();
-  void showText(const String& l1, const String& l2 = "");
-  void showLoadingIndicator();
-  void showWifiIndicator();
-  void showAnalysis(const PriceAnalysis& analysis);
-  void setBrightness(bool shouldBeBright);
-  void setBrightUntil(unsigned long until);
-  void updateBrightness(bool isFetching);
-  bool isBright() const;
+  void initialize() override;
+  void showText(const String& l1, const String& l2 = "") override;
+  void showLoadingIndicator() override;
+  void showWifiIndicator() override;
+  void showAnalysis(const PriceAnalysis& analysis) override;
+  void setBrightness(bool shouldBeBright) override;
+  void setBrightUntil(unsigned long until) override;
+  void updateBrightness(bool isFetching) override;
+  bool isBright() const override;
 };
 
 #endif

@@ -4,17 +4,11 @@
 #include <WString.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
+#include "IApiClient.h"
 
-class PriceApiClient {
+class PriceApiClient : public IApiClient {
 public:
-  struct ApiResponse {
-    bool success;
-    String payload;
-    int httpCode;
-    String error;
-  };
-
-  ApiResponse fetchJson(const char* url);
+  ApiResponse fetchJson(const char* url) override;
 };
 
 #endif

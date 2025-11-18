@@ -1,9 +1,12 @@
 #ifndef PRICE_MONITOR_H
 #define PRICE_MONITOR_H
 
+#include <vector>
+#ifndef WString_h
 #include <WString.h>
-#include "DisplayManager.h"
-#include "PriceApiClient.h"
+#endif
+#include "IDisplay.h"
+#include "IApiClient.h"
 #include "PriceData.h"
 #include "FetchGuard.h"
 
@@ -14,16 +17,17 @@ private:
   PriceAnalysis lastAnalysis;
   int lastScheduledMinute = -1;
   bool isFetching = false;
-  DisplayManager* display;
-  PriceApiClient* apiClient;
+  IDisplay* display;
+  IApiClient* apiClient;
 
+protected:
   // Helper methods for testability
   std::vector<PriceEntry> parseJsonToEntries(const String& json);
-  void handleApiError(const PriceApiClient::ApiResponse& response);
+  void handleApiError(const IApiClient::ApiResponse& response);
   void stampAnalysisTime();
 
 public:
-  PriceMonitor(DisplayManager* displayMgr, PriceApiClient* client);
+  PriceMonitor(IDisplay* displayMgr, IApiClient* client);
   bool fetchAndAnalyzePrices();
   bool isScheduledUpdateTime();
   const PriceAnalysis& getLastAnalysis() const;

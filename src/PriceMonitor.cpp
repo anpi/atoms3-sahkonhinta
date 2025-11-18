@@ -4,14 +4,14 @@
 #include <time.h>
 #include <vector>
 
-PriceMonitor::PriceMonitor(DisplayManager* displayMgr, PriceApiClient* client) 
+PriceMonitor::PriceMonitor(IDisplay* displayMgr, IApiClient* client) 
   : display(displayMgr), apiClient(client) {}
 
 std::vector<PriceEntry> PriceMonitor::parseJsonToEntries(const String& json) {
   std::vector<PriceEntry> prices;
   
-  DynamicJsonDocument doc(16384); // ~16KB for ~192 price entries
-  DeserializationError error = deserializeJson(doc, json);
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, json.c_str());
   
   if (error) {
     Serial.printf("JSON parse error: %s\n", error.c_str());
@@ -30,7 +30,8 @@ std::vector<PriceEntry> PriceMonitor::parseJsonToEntries(const String& json) {
   
   for (JsonObject obj : priceArray) {
     PriceEntry entry;
-    entry.dateTime = obj["DateTime"].as<String>();
+    const char* dt = obj["DateTime"];
+    if (dt) entry.dateTime = String(dt);
     entry.priceWithTax = obj["PriceWithTax"].as<float>();
     prices.push_back(entry);
   }
@@ -38,7 +39,7 @@ std::vector<PriceEntry> PriceMonitor::parseJsonToEntries(const String& json) {
   return prices;
 }
 
-void PriceMonitor::handleApiError(const PriceApiClient::ApiResponse& response) {
+void PriceMonitor::handleApiError(const IApiClient::ApiResponse& response) {
   if (response.error == "No WiFi connection") {
     display->showText("NO WIFI");
   } else if (response.httpCode > 0) {
@@ -63,7 +64,7 @@ bool PriceMonitor::fetchAndAnalyzePrices() {
     display->showLoadingIndicator();
   }
 
-  PriceApiClient::ApiResponse response = apiClient->fetchJson(API_URL);
+  IApiClient::ApiResponse response = apiClient->fetchJson(API_URL);
   
   if (!response.success) {
     handleApiError(response);
@@ -72,7 +73,7 @@ bool PriceMonitor::fetchAndAnalyzePrices() {
 
   Serial.println("API Response received, parsing...");
 
-  std::vector<PriceEntry> prices = parseJsonToEntries(response.payload);
+  std::vector<PriceEntry> prices = this->parseJsonToEntries(response.payload);
   
   if (prices.empty()) {
     display->showText("JSON ERROR");

@@ -4,6 +4,8 @@
 
 #include <string>
 #include <cstring>
+#include <sstream>
+#include <iomanip>
 
 class String {
 private:
@@ -14,6 +16,7 @@ public:
   String(const char* str) : data(str ? str : "") {}
   String(const std::string& str) : data(str) {}
   String(const String& other) : data(other.data) {}
+  String(int num) { std::ostringstream oss; oss << num; data = oss.str(); }
   
   String& operator=(const String& other) {
     data = other.data;

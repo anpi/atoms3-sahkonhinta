@@ -18,5 +18,12 @@ build/
 # Test vendor dependencies (optional local ArduinoJson)
 test/vendor/
 
+# Coverage reports
+test/*.gcda
+test/*.gcno
+test/*.gcov
+test/coverage.info
+test/coverage_html/
+
 # Configuration with credentials
 config.h

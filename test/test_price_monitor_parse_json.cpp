@@ -13,45 +13,58 @@ namespace {
   } Serial;
 }
 
+// Mock time functions for PriceMonitor
+extern "C" {
+  time_t time(time_t* t) {
+    time_t now = 1700000000; // Fixed timestamp
+    if (t) *t = now;
+    return now;
+  }
+  
+  struct tm* localtime(const time_t* /* timer */) {
+    static struct tm timeinfo;
+    timeinfo.tm_hour = 12;
+    timeinfo.tm_min = 30;
+    return &timeinfo;
+  }
+  
+  bool getLocalTime(struct tm* info) {
+    info->tm_hour = 12;
+    info->tm_min = 30;
+    return true;
+  }
+}
+
 // Include ArduinoJson
 #include <ArduinoJson.h>
 
 #include "../src/PriceData.h"
+#include "../src/FetchGuard.h"
 
-// Test harness that exposes parseJsonToEntries for testing
-class PriceMonitorTestHarness {
+// Now include mocks and real implementations
+#include "mocks/MockDisplay.h"
+#include "mocks/MockApiClient.h"
+
+extern const char* API_URL;
+const char* API_URL = "mock";
+
+// Include actual PriceAnalyzer and PriceMonitor implementations
+#include "../src/PriceAnalyzer.cpp"
+#include "../src/PriceMonitor.cpp"
+
+// Test wrapper to access private methods
+class PriceMonitorTestWrapper : public PriceMonitor {
 public:
-  std::vector<PriceEntry> parseJsonToEntries(const String& json) {
-    std::vector<PriceEntry> prices;
-    
-    DynamicJsonDocument doc(16384); // ~16KB for ~192 price entries
-    DeserializationError error = deserializeJson(doc, json.c_str());
-    
-    if (error) {
-      return prices; // empty vector indicates error
-    }
-
-    if (!doc.is<JsonArray>()) {
-      return prices;
-    }
-
-    JsonArray priceArray = doc.as<JsonArray>();
-    prices.reserve(priceArray.size());
-    
-    for (JsonObject obj : priceArray) {
-      PriceEntry entry;
-      entry.dateTime = String(obj["DateTime"].as<const char*>());
-      entry.priceWithTax = obj["PriceWithTax"].as<float>();
-      prices.push_back(entry);
-    }
-    
-    return prices;
+  PriceMonitorTestWrapper() : PriceMonitor(nullptr, nullptr) {}
+  
+  std::vector<PriceEntry> testParseJsonToEntries(const String& json) {
+    return parseJsonToEntries(json);
   }
 };
 
 // Test Suite: Core Functionality
 TEST(ParseJsonToEntries, ValidJsonArray_BasicEntries) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([
     {"DateTime":"2025-11-18T10:00:00","PriceWithTax":0.10},
@@ -59,7 +72,7 @@ TEST(ParseJsonToEntries, ValidJsonArray_BasicEntries) {
     {"DateTime":"2025-11-18T10:30:00","PriceWithTax":0.12}
   ])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(3));
   EXPECT_EQ(result[0].dateTime, String("2025-11-18T10:00:00"));
@@ -71,11 +84,11 @@ TEST(ParseJsonToEntries, ValidJsonArray_BasicEntries) {
 }
 
 TEST(ParseJsonToEntries, ValidJsonArray_SingleEntry) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00","PriceWithTax":0.15}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String("2025-11-18T10:00:00"));
@@ -83,17 +96,17 @@ TEST(ParseJsonToEntries, ValidJsonArray_SingleEntry) {
 }
 
 TEST(ParseJsonToEntries, ValidJsonArray_EmptyArray) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = "[]";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   EXPECT_EQ(result.size(), static_cast<size_t>(0));
 }
 
 TEST(ParseJsonToEntries, ValidJsonArray_LargeArray) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   // Build JSON with 50 entries
   std::string json = "[";
@@ -103,79 +116,79 @@ TEST(ParseJsonToEntries, ValidJsonArray_LargeArray) {
   }
   json += "]";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(String(json.c_str()));
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(String(json.c_str()));
   
   EXPECT_EQ(result.size(), static_cast<size_t>(50));
 }
 
 // Test Suite: Error Handling
 TEST(ParseJsonToEntries, InvalidJson_MalformedSyntax) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00","PriceWithTax":0.10,}])"; // trailing comma
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   EXPECT_EQ(result.size(), static_cast<size_t>(0)); // empty = error
 }
 
 TEST(ParseJsonToEntries, InvalidJson_NotArray_Object) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"({"DateTime":"2025-11-18T10:00:00","PriceWithTax":0.10})";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   EXPECT_EQ(result.size(), static_cast<size_t>(0));
 }
 
 TEST(ParseJsonToEntries, InvalidJson_NotArray_String) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"("not an array")";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   EXPECT_EQ(result.size(), static_cast<size_t>(0));
 }
 
 TEST(ParseJsonToEntries, InvalidJson_CompletelyBroken) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = "this is not json at all!@#$%";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   EXPECT_EQ(result.size(), static_cast<size_t>(0));
 }
 
 TEST(ParseJsonToEntries, InvalidJson_EmptyString) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = "";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   EXPECT_EQ(result.size(), static_cast<size_t>(0));
 }
 
 TEST(ParseJsonToEntries, InvalidJson_UnclosedBracket) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00","PriceWithTax":0.10})";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   EXPECT_EQ(result.size(), static_cast<size_t>(0));
 }
 
 // Test Suite: Field Validation
 TEST(ParseJsonToEntries, MissingField_DateTime) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"PriceWithTax":0.10}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String("")); // Empty string for missing field
@@ -183,11 +196,11 @@ TEST(ParseJsonToEntries, MissingField_DateTime) {
 }
 
 TEST(ParseJsonToEntries, MissingField_PriceWithTax) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00"}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String("2025-11-18T10:00:00"));
@@ -195,11 +208,11 @@ TEST(ParseJsonToEntries, MissingField_PriceWithTax) {
 }
 
 TEST(ParseJsonToEntries, MissingFields_Both) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{}])"; // Empty object
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String(""));
@@ -207,7 +220,7 @@ TEST(ParseJsonToEntries, MissingFields_Both) {
 }
 
 TEST(ParseJsonToEntries, ExtraFields_ShouldIgnore) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{
     "DateTime":"2025-11-18T10:00:00",
@@ -216,7 +229,7 @@ TEST(ParseJsonToEntries, ExtraFields_ShouldIgnore) {
     "AnotherField":123
   }])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String("2025-11-18T10:00:00"));
@@ -225,11 +238,11 @@ TEST(ParseJsonToEntries, ExtraFields_ShouldIgnore) {
 
 // Test Suite: Data Types
 TEST(ParseJsonToEntries, WrongType_PriceAsString) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00","PriceWithTax":"0.10"}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   // ArduinoJson will attempt conversion
@@ -237,33 +250,33 @@ TEST(ParseJsonToEntries, WrongType_PriceAsString) {
 }
 
 TEST(ParseJsonToEntries, NegativePrice) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00","PriceWithTax":-0.05}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_FLOAT_EQ(result[0].priceWithTax, -0.05f);
 }
 
 TEST(ParseJsonToEntries, VeryLargePrice) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00","PriceWithTax":999999.99}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_NEAR(result[0].priceWithTax, 999999.99f, 0.01f);
 }
 
 TEST(ParseJsonToEntries, ZeroPrice) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00","PriceWithTax":0.0}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_FLOAT_EQ(result[0].priceWithTax, 0.0f);
@@ -271,33 +284,33 @@ TEST(ParseJsonToEntries, ZeroPrice) {
 
 // Test Suite: DateTime Formats
 TEST(ParseJsonToEntries, DateTimeFormat_WithMilliseconds) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00.000","PriceWithTax":0.10}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String("2025-11-18T10:00:00.000"));
 }
 
 TEST(ParseJsonToEntries, DateTimeFormat_WithTimezone) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"2025-11-18T10:00:00+02:00","PriceWithTax":0.10}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String("2025-11-18T10:00:00+02:00"));
 }
 
 TEST(ParseJsonToEntries, DateTimeFormat_Unusual) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":"18-11-2025 10:00","PriceWithTax":0.10}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String("18-11-2025 10:00"));
@@ -305,7 +318,7 @@ TEST(ParseJsonToEntries, DateTimeFormat_Unusual) {
 
 // Test Suite: Edge Cases
 TEST(ParseJsonToEntries, WhitespaceVariations) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"(
     [
@@ -316,7 +329,7 @@ TEST(ParseJsonToEntries, WhitespaceVariations) {
     ]
   )";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String("2025-11-18T10:00:00"));
@@ -324,7 +337,7 @@ TEST(ParseJsonToEntries, WhitespaceVariations) {
 }
 
 TEST(ParseJsonToEntries, MultipleEntries_MixedValues) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([
     {"DateTime":"2025-11-18T00:00:00","PriceWithTax":0.05},
@@ -334,7 +347,7 @@ TEST(ParseJsonToEntries, MultipleEntries_MixedValues) {
     {"DateTime":"2025-11-18T23:45:00","PriceWithTax":0.08}
   ])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(5));
   EXPECT_FLOAT_EQ(result[0].priceWithTax, 0.05f);
@@ -343,7 +356,7 @@ TEST(ParseJsonToEntries, MultipleEntries_MixedValues) {
 }
 
 TEST(ParseJsonToEntries, RealWorldExample_TypicalApiResponse) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   // Simulate typical API response with realistic data
   String json = R"([
@@ -353,7 +366,7 @@ TEST(ParseJsonToEntries, RealWorldExample_TypicalApiResponse) {
     {"DateTime":"2025-11-18T00:45:00+02:00","PriceWithTax":0.0476}
   ])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(4));
   EXPECT_TRUE(result[0].dateTime.startsWith(String("2025-11-18T00:00")));
@@ -362,11 +375,11 @@ TEST(ParseJsonToEntries, RealWorldExample_TypicalApiResponse) {
 }
 
 TEST(ParseJsonToEntries, NullValues_InObject) {
-  PriceMonitorTestHarness harness;
+  PriceMonitorTestWrapper harness;
   
   String json = R"([{"DateTime":null,"PriceWithTax":null}])";
   
-  std::vector<PriceEntry> result = harness.parseJsonToEntries(json);
+  std::vector<PriceEntry> result = harness.testParseJsonToEntries(json);
   
   ASSERT_EQ(result.size(), static_cast<size_t>(1));
   EXPECT_EQ(result[0].dateTime, String(""));
