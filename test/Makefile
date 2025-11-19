@@ -56,8 +56,8 @@ endif
 
 BUILD_DIR = ../build/test
 
-# Automatically find all test files
-TEST_SOURCES = $(wildcard test_*.cpp)
+# Automatically find all test files in subdirectories
+TEST_SOURCES = $(wildcard test_*.cpp) $(wildcard */test_*.cpp)
 TEST_TARGETS = $(patsubst %.cpp,$(BUILD_DIR)/%,$(TEST_SOURCES))
 
 .PHONY: all clean run test deps install-deps install-gtest install-arduinojson clean-deps clean-all help coverage clean-coverage
@@ -104,8 +104,9 @@ install-deps: install-gtest install-arduinojson
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-# Pattern rule to build all test files
-$(BUILD_DIR)/test_%: test_%.cpp TestStringAdapter.h | $(BUILD_DIR)
+# Pattern rule to build test files
+$(BUILD_DIR)/%: %.cpp TestStringAdapter.h | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS) -lgmock
 
 test: run
@@ -121,7 +122,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 clean-coverage:
-	rm -f *.gcda *.gcno *.gcov coverage.info coverage_base.info coverage_test.info coverage_total.info
+	rm -f *.gcda *.gcno *.gcov coverage.info
 	rm -rf coverage_html
 
 clean-deps:

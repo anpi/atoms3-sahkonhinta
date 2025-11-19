@@ -3,12 +3,12 @@
 #include <cstdio>
 
 // Use test String adapter before including production headers
-#include "TestStringAdapter.h"
+#include "../TestStringAdapter.h"
 #define WString_h  // Prevent Arduino WString.h inclusion
 
 // Include production headers and implementation
-#include "../src/PriceData.h"
-#include "../src/PriceAnalyzer.cpp"
+#include "../../src/pricing/PriceData.h"
+#include "../../src/pricing/PriceAnalyzer.cpp"
 
 // BUG: What if current time is near the end of available data?
 // User at 23:00, only data until 23:45 - not enough for 90min average

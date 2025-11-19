@@ -8,7 +8,7 @@ using ::testing::Eq;
 using ::testing::InSequence;
 
 // Test String adapter
-#include "TestStringAdapter.h"
+#include "../TestStringAdapter.h"
 #define WString_h
 
 // Mock time functions
@@ -53,10 +53,10 @@ namespace {
 }
 
 #include <ArduinoJson.h>
-#include "../src/PriceData.h"
-#include "../src/FetchGuard.h"
-#include "../src/IDisplay.h"
-#include "../src/IApiClient.h"
+#include "../../src/pricing/PriceData.h"
+#include "../../src/pricing/FetchGuard.h"
+#include "../../src/display/IDisplay.h"
+#include "../../src/pricing/IApiClient.h"
 
 // gMock display
 class MockDisplay : public IDisplay {
@@ -81,8 +81,8 @@ public:
 extern const char* API_URL;
 const char* API_URL = "mock://api";
 
-#include "../src/PriceAnalyzer.cpp"
-#include "../src/PriceMonitor.cpp"
+#include "../../src/pricing/PriceAnalyzer.cpp"
+#include "../../src/pricing/PriceMonitor.cpp"
 
 // Helper to generate valid test JSON with 15-minute intervals
 String generateValidPriceJson() {

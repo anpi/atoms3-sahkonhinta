@@ -2,7 +2,7 @@
 #include <vector>
 
 // Use test String adapter before including production headers
-#include "TestStringAdapter.h"
+#include "../TestStringAdapter.h"
 #define WString_h  // Prevent Arduino WString.h inclusion
 
 // Mock Serial for testing
@@ -38,19 +38,19 @@ extern "C" {
 // Include ArduinoJson
 #include <ArduinoJson.h>
 
-#include "../src/PriceData.h"
-#include "../src/FetchGuard.h"
+#include "../../src/pricing/PriceData.h"
+#include "../../src/pricing/FetchGuard.h"
 
 // Now include mocks and real implementations
-#include "mocks/MockDisplay.h"
-#include "mocks/MockApiClient.h"
+#include "../mocks/MockDisplay.h"
+#include "../mocks/MockApiClient.h"
 
 extern const char* API_URL;
 const char* API_URL = "mock";
 
 // Include actual PriceAnalyzer and PriceMonitor implementations
-#include "../src/PriceAnalyzer.cpp"
-#include "../src/PriceMonitor.cpp"
+#include "../../src/pricing/PriceAnalyzer.cpp"
+#include "../../src/pricing/PriceMonitor.cpp"
 
 // Test wrapper to access private methods
 class PriceMonitorTestWrapper : public PriceMonitor {

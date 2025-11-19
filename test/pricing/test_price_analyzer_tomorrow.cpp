@@ -3,12 +3,12 @@
 #include <cstdio>
 
 // Use test String adapter before including production headers
-#include "TestStringAdapter.h"
+#include "../TestStringAdapter.h"
 #define WString_h  // Prevent Arduino WString.h inclusion
 
 // Include production headers and implementation
-#include "../src/PriceData.h"
-#include "../src/PriceAnalyzer.cpp"
+#include "../../src/pricing/PriceData.h"
+#include "../../src/pricing/PriceAnalyzer.cpp"
 
 // Helper to create timestamp strings
 String makeTimestamp(int year, int month, int day, int hour, int minute) {

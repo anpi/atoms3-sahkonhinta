@@ -1,7 +1,7 @@
 #ifndef MOCK_API_CLIENT_H
 #define MOCK_API_CLIENT_H
 
-#include "../../src/IApiClient.h"
+#include "../../src/pricing/IApiClient.h"
 #include "../TestStringAdapter.h"
 
 /**

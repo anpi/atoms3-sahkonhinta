@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 // Use test String adapter
-#include "TestStringAdapter.h"
+#include "../TestStringAdapter.h"
 #define WString_h
 #define WIFI_CLIENT_SECURE_H
 #define HTTP_CLIENT_H
@@ -43,8 +43,8 @@ String HTTPClient::mockPayload = "{}";
 #define WiFi_h
 
 // Include the actual implementation
-#include "../src/IApiClient.h"
-#include "../src/PriceApiClient.cpp"
+#include "../../src/pricing/IApiClient.h"
+#include "../../src/pricing/PriceApiClient.cpp"
 
 // Test Suite: WiFi Status Checking
 TEST(PriceApiClient, ReturnsErrorWhenWiFiNotConnected) {

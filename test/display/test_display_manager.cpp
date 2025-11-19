@@ -28,9 +28,9 @@ public:
 // Define before including headers
 #define WString_h
 
-#include "../src/PriceData.h"
-#include "../src/IDisplayHardware.h"
-#include "../src/DisplayManager.cpp"
+#include "../../src/pricing/PriceData.h"
+#include "../../src/display/IDisplayHardware.h"
+#include "../../src/display/DisplayManager.cpp"
 
 using ::testing::_;
 using ::testing::InSequence;

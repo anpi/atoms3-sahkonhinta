@@ -1,7 +1,7 @@
 #ifndef MOCK_DISPLAY_H
 #define MOCK_DISPLAY_H
 
-#include "../../src/IDisplay.h"
+#include "../../src/display/IDisplay.h"
 #include "../TestStringAdapter.h"
 
 /**

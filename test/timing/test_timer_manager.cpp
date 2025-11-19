@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "../src/ITimerHardware.h"
+#include "../../src/timing/ITimerHardware.h"
 
 using ::testing::_;
 using ::testing::Return;
@@ -27,8 +27,8 @@ public:
 // Define guard to prevent TimerManager.cpp from redefining globals
 #define TIMER_MANAGER_GLOBALS_DEFINED
 
-#include "../src/TimerManager.h"
-#include "../src/TimerManager.cpp"
+#include "../../src/timing/TimerManager.h"
+#include "../../src/timing/TimerManager.cpp"
 
 TEST(TimerManager, SetupInitializesTimerWithCorrectFrequency) {
   MockTimerHardware mock;

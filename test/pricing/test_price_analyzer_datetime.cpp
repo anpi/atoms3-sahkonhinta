@@ -3,10 +3,10 @@
 #include <cstdio>
 
 // Mock Arduino String before including PriceData
-#include "mocks/MockString.h"
+#include "../mocks/MockString.h"
 #define WString_h
 
-#include "../src/PriceData.h"
+#include "../../src/pricing/PriceData.h"
 
 // Test edge case: DateTime with timezone offset
 TEST(PriceAnalyzerEdgeCases, DateTimeWithTimezoneOffset) {

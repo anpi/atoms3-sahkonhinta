@@ -5,7 +5,7 @@
 #ifndef WString_h
 #include <WString.h>
 #endif
-#include "IDisplay.h"
+#include "../display/IDisplay.h"
 #include "IApiClient.h"
 #include "PriceData.h"
 #include "FetchGuard.h"

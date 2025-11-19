@@ -10,6 +10,8 @@
 1. **Test-Driven Development:** Write tests before implementation for core algorithms
 2. **Time Constraints:** Cheapest period must be 7:00-23:00 (washing machines can't run at night)
 3. **90-Minute Periods:** Always calculate based on 6 consecutive 15-minute intervals
+4. **No Auto-Commit:** Do not commit changes unless explicitly asked by the user
+5. **Commit Messages:** Good titles are sufficient; if adding bullet points, make them intentional - focus on why and what's not obvious, not minutiae
 
 ## Testing
 - Test framework: Google Test
@@ -20,19 +22,47 @@
 ## Code Organization
 ```
 src/
-├── App.cpp              # Main controller
-├── DisplayManager.cpp   # View layer (Finnish UI, color coding)
-├── PriceMonitor.cpp     # Model layer
-├── PriceAnalyzer.cpp    # Core algorithm (time constraints here!)
-├── PriceApiClient.cpp   # API integration
-├── WiFiManager.cpp      # Network management
-└── TimerManager.cpp     # 15-minute update scheduling
+├── app/
+│   ├── App.cpp/h           # Main controller
+│   └── IdleManager.h       # Power management
+├── pricing/
+│   ├── PriceAnalyzer.cpp/h # Core algorithm (time constraints here!)
+│   ├── PriceMonitor.cpp/h  # Model layer
+│   ├── PriceApiClient.cpp/h # API integration
+│   ├── PriceData.h         # Data structures
+│   ├── IApiClient.h        # API interface
+│   └── FetchGuard.h        # RAII fetch state
+├── display/
+│   ├── DisplayManager.cpp/h # View layer (Finnish UI, color coding)
+│   ├── IDisplay.h          # Display interface
+│   ├── IDisplayHardware.h  # Hardware abstraction
+│   └── M5DisplayHardware.h # M5 implementation
+├── network/
+│   ├── WiFiManager.cpp/h   # Network management
+│   ├── IWiFiHardware.h     # WiFi abstraction
+│   └── M5WiFiHardware.h    # M5 WiFi implementation
+└── timing/
+    ├── TimerManager.cpp/h  # 15-minute update scheduling
+    ├── ITimerHardware.h    # Timer abstraction
+    └── M5TimerHardware.h   # M5 timer implementation
 
 test/
-├── test_price_analyzer_basic.cpp
-├── test_price_analyzer_time_constraints.cpp
-├── test_price_analyzer_edge_cases.cpp
-└── test_price_analyzer_datetime.cpp
+├── pricing/
+│   ├── test_price_analyzer_basic.cpp
+│   ├── test_price_analyzer_time_constraints.cpp
+│   ├── test_price_analyzer_edge_cases.cpp
+│   ├── test_price_analyzer_datetime.cpp
+│   ├── test_price_monitor.cpp
+│   └── test_api_client.cpp
+├── display/
+│   └── test_display_manager.cpp
+├── network/
+│   └── test_wifi_manager.cpp
+├── timing/
+│   └── test_timer_manager.cpp
+└── mocks/
+    ├── MockDisplay.h
+    └── MockApiClient.h
 ```
 
 ## Key Implementation Details

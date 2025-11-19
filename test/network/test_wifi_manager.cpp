@@ -29,8 +29,8 @@ public:
 // Define WString_h to prevent Arduino WString.h include
 #define WString_h
 
-#include "../src/IWiFiHardware.h"
-#include "../src/WiFiManager.h"
+#include "../../src/network/IWiFiHardware.h"
+#include "../../src/network/WiFiManager.h"
 
 using ::testing::Return;
 using ::testing::_;
@@ -72,7 +72,7 @@ const int DAYLIGHT_OFFSET_SEC = 3600;
 #define WIFI_OFF 0
 
 #define WIFI_MANAGER_GLOBALS_DEFINED
-#include "../src/WiFiManager.cpp"
+#include "../../src/network/WiFiManager.cpp"
 
 // Test: Already connected - should return immediately
 TEST(WiFiManagerTest, ConnectWhenAlreadyConnected) {

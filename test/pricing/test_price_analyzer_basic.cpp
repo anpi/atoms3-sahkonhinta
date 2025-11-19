@@ -3,12 +3,12 @@
 #include <cstdio>
 
 // Use test String adapter before including production headers
-#include "TestStringAdapter.h"
+#include "../TestStringAdapter.h"
 #define WString_h  // Prevent Arduino WString.h inclusion
 
 // Now include production headers and implementation
-#include "../src/PriceData.h"
-#include "../src/PriceAnalyzer.cpp"
+#include "../../src/pricing/PriceData.h"
+#include "../../src/pricing/PriceAnalyzer.cpp"
 
 // Test Suite: calculate90MinAverage
 TEST(Calculate90MinAverage, ValidInput_Exactly6Periods) {

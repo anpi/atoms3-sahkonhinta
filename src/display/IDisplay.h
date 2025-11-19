@@ -4,7 +4,7 @@
 #ifndef WString_h
 #include <WString.h>
 #endif
-#include "PriceData.h"
+#include "../pricing/PriceData.h"
 
 /**
  * Interface for display operations.

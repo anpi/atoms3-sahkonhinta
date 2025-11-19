@@ -3,12 +3,12 @@
 #include <cstdio>
 
 // Use test String adapter before including production headers
-#include "TestStringAdapter.h"
+#include "../TestStringAdapter.h"
 #define WString_h  // Prevent Arduino WString.h inclusion
 
 // Include production headers and implementation
-#include "../src/PriceData.h"
-#include "../src/PriceAnalyzer.cpp"
+#include "../../src/pricing/PriceData.h"
+#include "../../src/pricing/PriceAnalyzer.cpp"
 
 // Test Suite: Time-constrained cheapest period (7:00-23:00)
 // Requirement: Washing machine can only run during hours 7:00-23:00
