@@ -104,7 +104,7 @@ install-deps: install-gtest install-arduinojson
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-# Generic pattern rule to build all test files
+# Pattern rule to build all test files
 $(BUILD_DIR)/test_%: test_%.cpp TestStringAdapter.h | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 

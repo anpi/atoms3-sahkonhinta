@@ -1,4 +1,5 @@
 #include "DisplayManager.h"
+#include "DisplayLogic.h"
 #include <M5AtomS3.h>
 
 void DisplayManager::initialize() {
@@ -39,43 +40,28 @@ void DisplayManager::showAnalysis(const PriceAnalysis& analysis) {
   float avgCents = analysis.next90MinAvg * 100.0f;
   float cheapestCents = analysis.cheapest90MinAvg * 100.0f;
 
-  // Determine background color based on next 90min average
-  uint16_t bgColor, textColor;
-  if (avgCents < 0) {
-    // No data for next 90min - use neutral color
-    bgColor = TFT_BLACK;
-    textColor = TFT_WHITE;
-  } else if (avgCents < 8.0f) {
-    bgColor = 0x0320;  // Green
-    textColor = TFT_WHITE;
-  } else if (avgCents < 15.0f) {
-    bgColor = 0xFC60;  // Yellow
-    textColor = TFT_BLACK;
-  } else {
-    bgColor = 0xC800;  // Red
-    textColor = TFT_WHITE;
-  }
+  // Determine colors using testable helper
+  DisplayLogic::ColorScheme colors = DisplayLogic::determineColorScheme(avgCents);
 
-  AtomS3.Display.fillScreen(bgColor);
-  AtomS3.Display.setTextColor(textColor);
+  AtomS3.Display.fillScreen(colors.background);
+  AtomS3.Display.setTextColor(colors.text);
   
   // Top section: "Now HH:MM" label
   String nowLabel = "Nyt " + analysis.currentPeriodStartTime;
   
   AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setTextColor(textColor);
+  AtomS3.Display.setTextColor(colors.text);
   AtomS3.Display.setCursor(4, 4);
   AtomS3.Display.print(nowLabel);
   
   // Next 90min price - centered between "Nyt" and "Halvin" labels
   AtomS3.Display.setTextSize(3);
-  AtomS3.Display.setTextColor(textColor);
+  AtomS3.Display.setTextColor(colors.text);
   char buf[16];
   if (avgCents >= 0) {
     snprintf(buf, sizeof(buf), "%.1f c", avgCents);
     int textWidth = strlen(buf) * 18;  // Approx width for size 3
-    int x = (128 - textWidth) / 2;
-    if (x < 0) x = 4;  // Safety check
+    int x = DisplayLogic::centerText(textWidth);
     AtomS3.Display.setCursor(x, 24);
     AtomS3.Display.print(buf);
   } else {
@@ -85,7 +71,7 @@ void DisplayManager::showAnalysis(const PriceAnalysis& analysis) {
   
   // Middle section: Cheapest period label
   AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setTextColor(textColor);
+  AtomS3.Display.setTextColor(colors.text);
   if (cheapestCents >= 0) {
     // Build the cheapest time string with optional (tom)
     String cheapestLabel = "Halvin " + analysis.cheapest90MinTime;
@@ -98,11 +84,10 @@ void DisplayManager::showAnalysis(const PriceAnalysis& analysis) {
     
     // Cheapest price - centered between "Halvin" and "Päivitetty" labels
     AtomS3.Display.setTextSize(2);
-    AtomS3.Display.setTextColor(textColor);
+    AtomS3.Display.setTextColor(colors.text);
     snprintf(buf, sizeof(buf), "%.1f c", cheapestCents);
     int priceWidth = strlen(buf) * 12;  // Approx width for size 2
-    int x = (128 - priceWidth) / 2;
-    if (x < 0) x = 4;  // Safety check
+    int x = DisplayLogic::centerText(priceWidth);
     AtomS3.Display.setCursor(x, 88);
     AtomS3.Display.print(buf);
   } else {
@@ -112,7 +97,7 @@ void DisplayManager::showAnalysis(const PriceAnalysis& analysis) {
   
   // Bottom: Update time
   AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setTextColor(textColor);
+  AtomS3.Display.setTextColor(colors.text);
   AtomS3.Display.setCursor(4, 116);
   AtomS3.Display.print("Päivitetty ");
   AtomS3.Display.print(analysis.lastFetchTime);

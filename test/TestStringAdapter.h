@@ -63,6 +63,25 @@ public:
     return data != (str ? str : "");
   }
   
+  // Concatenation operators
+  String operator+(const String& other) const {
+    return String(data + other.data);
+  }
+  
+  String operator+(const char* str) const {
+    return String(data + (str ? str : ""));
+  }
+  
+  String& operator+=(const String& other) {
+    data += other.data;
+    return *this;
+  }
+  
+  String& operator+=(const char* str) {
+    if (str) data += str;
+    return *this;
+  }
+  
   // For std::cout
   friend std::ostream& operator<<(std::ostream& os, const String& str) {
     os << str.data;

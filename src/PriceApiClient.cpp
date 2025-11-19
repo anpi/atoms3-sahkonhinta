@@ -1,5 +1,7 @@
 #include "PriceApiClient.h"
+#ifndef WiFi_h
 #include <WiFi.h>
+#endif
 
 PriceApiClient::ApiResponse PriceApiClient::fetchJson(const char* url) {
   ApiResponse response;
@@ -22,7 +24,7 @@ PriceApiClient::ApiResponse PriceApiClient::fetchJson(const char* url) {
 
   response.httpCode = http.GET();
   if (response.httpCode != 200) {
-    response.error = "HTTP error " + String(response.httpCode);
+    response.error = String("HTTP error ") + String(response.httpCode);
     http.end();
     return response;
   }

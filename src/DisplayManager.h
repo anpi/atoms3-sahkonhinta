@@ -1,7 +1,9 @@
 #ifndef DISPLAY_MANAGER_H
 #define DISPLAY_MANAGER_H
 
+#ifndef WString_h
 #include <WString.h>
+#endif
 #include "PriceData.h"
 #include "IDisplay.h"
 
