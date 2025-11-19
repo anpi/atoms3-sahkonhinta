@@ -9,7 +9,7 @@ using ::testing::InSequence;
 // Define IRAM_ATTR as nothing for tests
 #define IRAM_ATTR
 
-// Mock volatile flags and ISR functions
+// Mock volatile flags and ISR functions - define before including TimerManager.cpp
 volatile bool buttonWakeFlag = false;
 volatile bool timerFlag = false;
 void buttonISR() {}
@@ -24,50 +24,11 @@ public:
   MOCK_METHOD(bool, getLocalTime, (struct tm* info), (override));
 };
 
+// Define guard to prevent TimerManager.cpp from redefining globals
+#define TIMER_MANAGER_GLOBALS_DEFINED
+
 #include "../src/TimerManager.h"
-
-// Manually include the implementation
-TimerManager::TimerManager(ITimerHardware* hardware) : hw(hardware), timer(nullptr) {}
-
-void TimerManager::setup() {
-  timer = hw->timerBegin(1000000);
-  hw->timerAttachInterrupt(timer, &timerISR);
-}
-
-void TimerManager::scheduleNextUpdate() {
-  struct tm timeinfo;
-  uint64_t seconds = 60;
-  
-  if (hw->getLocalTime(&timeinfo)) {
-    seconds = getSecondsUntilNextUpdate(timeinfo.tm_min, timeinfo.tm_sec);
-  }
-  
-  hw->timerAlarm(timer, seconds * 1000000, false, 0);
-}
-
-bool TimerManager::wasTriggered() {
-  if (timerFlag) {
-    timerFlag = false;
-    return true;
-  }
-  return false;
-}
-
-uint64_t TimerManager::getSecondsUntilNextUpdate(int currentMinute, int currentSecond) {
-  int nextMinute;
-  if (currentMinute < 15) nextMinute = 15;
-  else if (currentMinute < 30) nextMinute = 30;
-  else if (currentMinute < 45) nextMinute = 45;
-  else nextMinute = 60;
-  
-  int minutesUntilNext = nextMinute - currentMinute;
-  if (minutesUntilNext <= 0) minutesUntilNext += 60;
-  
-  int secondsUntilNext = (minutesUntilNext * 60) - currentSecond;
-  if (secondsUntilNext <= 0) secondsUntilNext = 60;
-  
-  return secondsUntilNext;
-}
+#include "../src/TimerManager.cpp"
 
 TEST(TimerManager, SetupInitializesTimerWithCorrectFrequency) {
   MockTimerHardware mock;

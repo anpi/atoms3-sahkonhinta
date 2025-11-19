@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #endif
 
+#ifndef TIMER_MANAGER_GLOBALS_DEFINED
 volatile bool buttonWakeFlag = false;
 volatile bool timerFlag = false;
 
@@ -13,6 +14,7 @@ void IRAM_ATTR buttonISR() {
 void IRAM_ATTR timerISR() {
   timerFlag = true;
 }
+#endif
 
 TimerManager::TimerManager(ITimerHardware* hardware) : hw(hardware), timer(nullptr) {}
 

@@ -121,7 +121,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 clean-coverage:
-	rm -f *.gcda *.gcno *.gcov coverage.info
+	rm -f *.gcda *.gcno *.gcov coverage.info coverage_base.info coverage_test.info coverage_total.info
 	rm -rf coverage_html
 
 clean-deps:
