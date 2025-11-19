@@ -1,7 +1,7 @@
 #include "App.h"
 #include <M5AtomS3.h>
 
-App::App() : displayManager(&displayHardware), priceMonitor(&displayManager, &apiClient) {}
+App::App() : displayManager(&displayHardware), priceMonitor(&displayManager, &apiClient), timerManager(&timerHardware) {}
 
 void App::setup() {
   auto cfg = M5.config();

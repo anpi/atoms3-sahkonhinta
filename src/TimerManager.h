@@ -1,6 +1,8 @@
 #ifndef TIMER_MANAGER_H
 #define TIMER_MANAGER_H
 
+#include "ITimerHardware.h"
+
 #ifndef ARDUINO
 #include <cstdint>
 #include <ctime>
@@ -18,17 +20,19 @@ void IRAM_ATTR timerISR();
 #endif
 
 class TimerManager {
-#ifdef ARDUINO
 private:
-  hw_timer_t* timer = nullptr;
+  ITimerHardware* hw;
+  void* timer = nullptr;
+  
+  // Internal logic
+  uint64_t getSecondsUntilNextUpdate(int currentMinute, int currentSecond);
   
 public:
+  TimerManager(ITimerHardware* hardware);
+  
   void setup();
   void scheduleNextUpdate();
   bool wasTriggered();
-#else
-public:
-#endif
 };
 
 #endif

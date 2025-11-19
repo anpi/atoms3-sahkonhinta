@@ -3,6 +3,7 @@
 
 #include "M5DisplayHardware.h"
 #include "DisplayManager.h"
+#include "M5TimerHardware.h"
 #include "WiFiManager.h"
 #include "PriceApiClient.h"
 #include "PriceMonitor.h"
@@ -15,6 +16,7 @@ class App {
 private:
   M5DisplayHardware displayHardware;
   DisplayManager displayManager;
+  M5TimerHardware timerHardware;
   WiFiManager wifiManager;
   PriceApiClient apiClient;
   PriceMonitor priceMonitor;
