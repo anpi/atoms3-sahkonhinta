@@ -6,13 +6,26 @@
 #endif
 #include "PriceData.h"
 #include "IDisplay.h"
+#include "IDisplayHardware.h"
 
 class DisplayManager : public IDisplay {
 private:
+  IDisplayHardware* hw;
   bool bright = false;
   unsigned long brightUntil = 0;
+  
+  // Internal logic methods
+  struct ColorScheme {
+    uint16_t background;
+    uint16_t text;
+  };
+  
+  ColorScheme determineColorScheme(float avgCents);
+  int centerText(int textWidth, int displayWidth = 128);
 
 public:
+  DisplayManager(IDisplayHardware* hardware);
+  
   void initialize() override;
   void showText(const String& l1, const String& l2 = "") override;
   void showLoadingIndicator() override;

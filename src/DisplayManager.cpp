@@ -1,37 +1,43 @@
 #include "DisplayManager.h"
-#include "DisplayLogic.h"
-#include <M5AtomS3.h>
+#ifndef TESTING
+#include <Arduino.h>
+#else
+// Test stubs
+unsigned long millis() { return 0; }
+#endif
+
+DisplayManager::DisplayManager(IDisplayHardware* hardware) : hw(hardware) {}
 
 void DisplayManager::initialize() {
-  AtomS3.Display.setRotation(1);
-  AtomS3.Display.setBrightness(1);
+  hw->setRotation(1);
+  hw->setBrightness(1);
 }
 
 void DisplayManager::showText(const String& l1, const String& l2) {
-  AtomS3.Display.fillScreen(TFT_BLACK);
-  AtomS3.Display.setTextColor(TFT_WHITE);
-  AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setCursor(4, 8);
-  AtomS3.Display.println(l1);
+  hw->fillScreen(0x0000);  // TFT_BLACK
+  hw->setTextColor(0xFFFF);  // TFT_WHITE
+  hw->setTextSize(1);
+  hw->setCursor(4, 8);
+  hw->println(l1);
   if (l2.length()) {
-    AtomS3.Display.setCursor(4, 24);
-    AtomS3.Display.println(l2);
+    hw->setCursor(4, 24);
+    hw->println(l2);
   }
 }
 
 void DisplayManager::showLoadingIndicator() {
-  AtomS3.Display.fillCircle(120, 8, 6, TFT_YELLOW);
-  AtomS3.Display.setTextColor(TFT_BLACK);
-  AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setCursor(116, 4);
+  hw->fillCircle(120, 8, 6, 0xFC60);  // TFT_YELLOW
+  hw->setTextColor(0x0000);  // TFT_BLACK
+  hw->setTextSize(1);
+  hw->setCursor(116, 4);
 }
 
 void DisplayManager::showWifiIndicator() {
-  AtomS3.Display.fillCircle(120, 8, 6, TFT_BLUE);
-  AtomS3.Display.setTextColor(TFT_WHITE);
-  AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setCursor(118, 4);
-  AtomS3.Display.println("W");
+  hw->fillCircle(120, 8, 6, 0x001F);  // TFT_BLUE
+  hw->setTextColor(0xFFFF);  // TFT_WHITE
+  hw->setTextSize(1);
+  hw->setCursor(118, 4);
+  hw->println("W");
 }
 
 void DisplayManager::showAnalysis(const PriceAnalysis& analysis) {
@@ -41,74 +47,76 @@ void DisplayManager::showAnalysis(const PriceAnalysis& analysis) {
   float cheapestCents = analysis.cheapest90MinAvg * 100.0f;
 
   // Determine colors using testable helper
-  DisplayLogic::ColorScheme colors = DisplayLogic::determineColorScheme(avgCents);
+  ColorScheme colors = determineColorScheme(avgCents);
 
-  AtomS3.Display.fillScreen(colors.background);
-  AtomS3.Display.setTextColor(colors.text);
+  hw->fillScreen(colors.background);
+  hw->setTextColor(colors.text);
   
   // Top section: "Now HH:MM" label
-  String nowLabel = "Nyt " + analysis.currentPeriodStartTime;
+  String nowLabel("Nyt ");
+  nowLabel += analysis.currentPeriodStartTime;
   
-  AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setTextColor(colors.text);
-  AtomS3.Display.setCursor(4, 4);
-  AtomS3.Display.print(nowLabel);
+  hw->setTextSize(1);
+  hw->setTextColor(colors.text);
+  hw->setCursor(4, 4);
+  hw->print(nowLabel);
   
   // Next 90min price - centered between "Nyt" and "Halvin" labels
-  AtomS3.Display.setTextSize(3);
-  AtomS3.Display.setTextColor(colors.text);
+  hw->setTextSize(3);
+  hw->setTextColor(colors.text);
   char buf[16];
   if (avgCents >= 0) {
     snprintf(buf, sizeof(buf), "%.1f c", avgCents);
     int textWidth = strlen(buf) * 18;  // Approx width for size 3
-    int x = DisplayLogic::centerText(textWidth);
-    AtomS3.Display.setCursor(x, 24);
-    AtomS3.Display.print(buf);
+    int x = centerText(textWidth);
+    hw->setCursor(x, 24);
+    hw->print(buf);
   } else {
-    AtomS3.Display.setCursor(30, 24);
-    AtomS3.Display.print("N/A");
+    hw->setCursor(30, 24);
+    hw->print("N/A");
   }
   
   // Middle section: Cheapest period label
-  AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setTextColor(colors.text);
+  hw->setTextSize(1);
+  hw->setTextColor(colors.text);
   if (cheapestCents >= 0) {
     // Build the cheapest time string with optional (tom)
-    String cheapestLabel = "Halvin " + analysis.cheapest90MinTime;
+    String cheapestLabel("Halvin ");
+    cheapestLabel += analysis.cheapest90MinTime;
     if (analysis.cheapestIsTomorrow) {
       cheapestLabel += " (huo)";
     }
     
-    AtomS3.Display.setCursor(4, 68);
-    AtomS3.Display.print(cheapestLabel);
+    hw->setCursor(4, 68);
+    hw->print(cheapestLabel);
     
     // Cheapest price - centered between "Halvin" and "Päivitetty" labels
-    AtomS3.Display.setTextSize(2);
-    AtomS3.Display.setTextColor(colors.text);
+    hw->setTextSize(2);
+    hw->setTextColor(colors.text);
     snprintf(buf, sizeof(buf), "%.1f c", cheapestCents);
     int priceWidth = strlen(buf) * 12;  // Approx width for size 2
-    int x = DisplayLogic::centerText(priceWidth);
-    AtomS3.Display.setCursor(x, 88);
-    AtomS3.Display.print(buf);
+    int x = centerText(priceWidth);
+    hw->setCursor(x, 88);
+    hw->print(buf);
   } else {
-    AtomS3.Display.setCursor(4, 88);
-    AtomS3.Display.print("No data");
+    hw->setCursor(4, 88);
+    hw->print("No data");
   }
   
   // Bottom: Update time
-  AtomS3.Display.setTextSize(1);
-  AtomS3.Display.setTextColor(colors.text);
-  AtomS3.Display.setCursor(4, 116);
-  AtomS3.Display.print("Päivitetty ");
-  AtomS3.Display.print(analysis.lastFetchTime);
+  hw->setTextSize(1);
+  hw->setTextColor(colors.text);
+  hw->setCursor(4, 116);
+  hw->print("Päivitetty ");
+  hw->print(analysis.lastFetchTime);
 }
 
 void DisplayManager::setBrightness(bool shouldBeBright) {
   if (shouldBeBright) {
-    AtomS3.Display.setBrightness(255);
+    hw->setBrightness(255);
     bright = true;
   } else {
-    AtomS3.Display.setBrightness(1);
+    hw->setBrightness(1);
     bright = false;
     brightUntil = 0;
   }
@@ -126,4 +134,31 @@ void DisplayManager::updateBrightness(bool isFetching) {
 
 bool DisplayManager::isBright() const {
   return bright;
+}
+
+// Internal logic methods
+DisplayManager::ColorScheme DisplayManager::determineColorScheme(float avgCents) {
+  ColorScheme scheme;
+  
+  if (avgCents < 0) {
+    // No data for next 90min - use neutral color
+    scheme.background = 0x0000;  // TFT_BLACK
+    scheme.text = 0xFFFF;  // TFT_WHITE
+  } else if (avgCents < 8.0f) {
+    scheme.background = 0x0320;  // Green
+    scheme.text = 0xFFFF;  // TFT_WHITE
+  } else if (avgCents < 15.0f) {
+    scheme.background = 0xFC60;  // Yellow
+    scheme.text = 0x0000;  // TFT_BLACK
+  } else {
+    scheme.background = 0xC800;  // Red
+    scheme.text = 0xFFFF;  // TFT_WHITE
+  }
+  
+  return scheme;
+}
+
+int DisplayManager::centerText(int textWidth, int displayWidth) {
+  int x = (displayWidth - textWidth) / 2;
+  return (x < 0) ? 4 : x;  // Safety check
 }

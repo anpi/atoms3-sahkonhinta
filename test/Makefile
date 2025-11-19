@@ -1,7 +1,7 @@
 # Test Makefile for atoms3-sahkonhinta
 
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra
+CXXFLAGS = -std=c++17 -Wall -Wextra -DTESTING
 LDFLAGS = -pthread
 
 # Coverage flags
@@ -106,7 +106,7 @@ $(BUILD_DIR):
 
 # Pattern rule to build all test files
 $(BUILD_DIR)/test_%: test_%.cpp TestStringAdapter.h | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS) -lgmock
 
 test: run
 

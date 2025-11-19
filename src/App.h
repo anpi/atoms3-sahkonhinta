@@ -1,6 +1,7 @@
 #ifndef APP_H
 #define APP_H
 
+#include "M5DisplayHardware.h"
 #include "DisplayManager.h"
 #include "WiFiManager.h"
 #include "PriceApiClient.h"
@@ -12,6 +13,7 @@ extern const char* WIFI_SSID;
 
 class App {
 private:
+  M5DisplayHardware displayHardware;
   DisplayManager displayManager;
   WiFiManager wifiManager;
   PriceApiClient apiClient;
