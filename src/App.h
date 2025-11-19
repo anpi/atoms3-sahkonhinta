@@ -4,6 +4,7 @@
 #include "M5DisplayHardware.h"
 #include "DisplayManager.h"
 #include "M5TimerHardware.h"
+#include "M5WiFiHardware.h"
 #include "WiFiManager.h"
 #include "PriceApiClient.h"
 #include "PriceMonitor.h"
@@ -17,6 +18,7 @@ private:
   M5DisplayHardware displayHardware;
   DisplayManager displayManager;
   M5TimerHardware timerHardware;
+  M5WiFiHardware wifiHardware;
   WiFiManager wifiManager;
   PriceApiClient apiClient;
   PriceMonitor priceMonitor;

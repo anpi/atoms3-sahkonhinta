@@ -1,55 +1,58 @@
 #include "WiFiManager.h"
+
+#ifndef TESTING
 #include <WiFi.h>
 #include <time.h>
+#endif
 
 bool WiFiManager::connect() {
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("WiFi already connected: " + WiFi.localIP().toString());
+  if (wifi->getStatus() == WL_CONNECTED) {
+    Serial.println("WiFi already connected: " + wifi->getLocalIP());
     return true;
   }
 
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect(true);
-  delay(500);
+  wifi->setMode(WIFI_STA);
+  wifi->disconnect(true);
+  wifi->delayMs(500);
   
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  wifi->begin(WIFI_SSID, WIFI_PASS);
   Serial.printf("Connecting to %s\n", WIFI_SSID);
 
-  for (int i = 0; i < 40 && WiFi.status() != WL_CONNECTED; ++i) {
-    delay(500);
+  for (int i = 0; i < 40 && wifi->getStatus() != WL_CONNECTED; ++i) {
+    wifi->delayMs(500);
     if (i % 5 == 0) {
-      Serial.printf("WiFi status: %d\n", WiFi.status());
+      Serial.printf("WiFi status: %d\n", wifi->getStatus());
     }
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    String ip = WiFi.localIP().toString();
+  if (wifi->getStatus() == WL_CONNECTED) {
+    String ip = wifi->getLocalIP();
     Serial.println("WiFi OK, IP: " + ip);
     syncTime();
     return true;
   } else {
-    Serial.println("WiFi FAILED, status: " + String(WiFi.status()));
+    Serial.println("WiFi FAILED, status: " + String(wifi->getStatus()));
     return false;
   }
 }
 
 void WiFiManager::disconnect() {
-  if (WiFi.status() == WL_CONNECTED) {
-    WiFi.disconnect(true);
-    WiFi.mode(WIFI_OFF);
+  if (wifi->getStatus() == WL_CONNECTED) {
+    wifi->disconnect(true);
+    wifi->setMode(WIFI_OFF);
     Serial.println("WiFi disconnected for power savings");
   }
 }
 
 bool WiFiManager::isConnected() {
-  return WiFi.status() == WL_CONNECTED;
+  return wifi->getStatus() == WL_CONNECTED;
 }
 
 String WiFiManager::getIP() {
-  return WiFi.localIP().toString();
+  return wifi->getLocalIP();
 }
 
 void WiFiManager::syncTime() {
-  configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
+  wifi->configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
   Serial.println("Time sync initiated");
 }
